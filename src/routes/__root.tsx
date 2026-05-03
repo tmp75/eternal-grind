@@ -38,6 +38,12 @@ export const Route = createRootRoute({
       { name: "author", content: "Bartholomew, CEO" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Eternity Corp — $OOO" },
+      { name: "twitter:title", content: "Eternity Corp — $OOO" },
+      { property: "og:description", content: "Synergizing the void, forever. The immortal corporate shitcoin on Ink Chain." },
+      { name: "twitter:description", content: "Synergizing the void, forever. The immortal corporate shitcoin on Ink Chain." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/67e6f1d0-ac7c-4548-9dab-26ba3abafef2/id-preview-d38fb5ab--9c48246d-75ef-4fcf-a685-e9521b4afad9.lovable.app-1776719290483.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/67e6f1d0-ac7c-4548-9dab-26ba3abafef2/id-preview-d38fb5ab--9c48246d-75ef-4fcf-a685-e9521b4afad9.lovable.app-1776719290483.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
