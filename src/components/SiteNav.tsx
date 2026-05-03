@@ -21,7 +21,7 @@ export function SiteNav() {
             <Link
               key={it.to}
               to={it.to}
-              activeOptions={it.exact ? { exact: true } : undefined}
+              activeOptions={"exact" in it && it.exact ? { exact: true } : undefined}
               activeProps={{ className: "text-ink" }}
               className="text-pearl/80 hover:text-ink transition-colors"
             >
