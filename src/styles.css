@@ -44,6 +44,8 @@
   --color-pearl: var(--pearl);
   --color-bone: var(--bone);
   --color-pink: var(--pink);
+  --color-necro: var(--necro);
+  --color-amber: var(--amber);
 }
 
 :root {
