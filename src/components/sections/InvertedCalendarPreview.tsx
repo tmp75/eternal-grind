@@ -1,0 +1,71 @@
+import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
+import { WEEK } from "@/lib/ooo";
+
+const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
+const HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17];
+
+export function InvertedCalendarPreview() {
+  return (
+    <section className="relative overflow-hidden border-y border-border bg-charcoal py-32 md:py-44">
+      <div className="pointer-events-none absolute inset-0 pinstripe opacity-40" aria-hidden />
+      <div className="relative mx-auto max-w-[1300px] px-6 md:px-12">
+        <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">§02 — The Inverted Calendar</p>
+            <h2 className="max-w-3xl font-display text-5xl leading-[1.02] tracking-tight text-pearl md:text-6xl">
+              Free blocks <em className="text-ink">dominate</em>. Work shrinks to a corner.
+            </h2>
+          </div>
+          <Link to="/calendar" className="border border-ink/50 bg-ink/10 px-5 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl hover:border-ink hover:bg-ink/20">
+            Open full week →
+          </Link>
+        </div>
+
+        <div className="border border-border bg-obsidian">
+          <div className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border bg-charcoal/60 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
+            <div className="border-r border-border p-3">Hr</div>
+            {DAYS.map((d) => (
+              <div key={d} className="border-r border-border p-3 last:border-r-0">{d}</div>
+            ))}
+          </div>
+
+          {HOURS.map((h) => (
+            <div key={h} className="grid grid-cols-[60px_repeat(5,1fr)] border-b border-border last:border-b-0">
+              <div className="border-r border-border p-3 font-mono text-[10px] text-bone/60">{h}:00</div>
+              {DAYS.map((_, di) => {
+                const block = WEEK.find((b) => b.day === di && h >= b.start && h < b.end);
+                const free = block?.type === "free";
+                const work = block?.type === "work";
+                return (
+                  <motion.div
+                    key={di}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: (h - 9) * 0.04 + di * 0.02 }}
+                    className={`relative min-h-[44px] border-r border-border p-2 last:border-r-0 ${
+                      free ? "bg-ink/15" : work ? "bg-bone/5" : ""
+                    }`}
+                  >
+                    {block && h === block.start && (
+                      <span className={`font-mono text-[9px] uppercase tracking-[0.2em] ${free ? "text-necro" : "text-bone/60"}`}>
+                        {free ? "🟢" : "⚫"} {block.label}
+                      </span>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-wrap items-center gap-6 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
+          <span className="flex items-center gap-2"><span className="inline-block h-3 w-3 bg-ink/40" /> Celebrated free block</span>
+          <span className="flex items-center gap-2"><span className="inline-block h-3 w-3 bg-bone/10" /> Wasted work</span>
+          <span className="ml-auto text-necro">● Free time : Work time = ~6 : 1</span>
+        </div>
+      </div>
+    </section>
+  );
+}
