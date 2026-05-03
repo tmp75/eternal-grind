@@ -44,6 +44,8 @@
   --color-pearl: var(--pearl);
   --color-bone: var(--bone);
   --color-pink: var(--pink);
+  --color-necro: var(--necro);
+  --color-amber: var(--amber);
 }
 
 :root {
@@ -57,6 +59,8 @@
   --pearl: oklch(0.95 0.015 80);        /* #F4F0E6 */
   --bone: oklch(0.82 0.025 80);         /* #C8C2B0 */
   --pink: oklch(0.66 0.28 350);         /* #FF2EA0 */
+  --necro: oklch(0.78 0.22 145);        /* necromancer green */
+  --amber: oklch(0.82 0.16 75);         /* warning amber */
 
   /* Semantic mapping (dark by default) */
   --background: var(--obsidian);

@@ -1,20 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/sections/Hero";
 import { TickerBand } from "@/components/sections/TickerBand";
-import { ManifestoTeaser } from "@/components/sections/ManifestoTeaser";
-import { MeetBart } from "@/components/sections/MeetBart";
-import { ImmortalityEngine } from "@/components/sections/ImmortalityEngine";
-import { Tokenomics } from "@/components/sections/Tokenomics";
-import { LiveFeed } from "@/components/sections/LiveFeed";
-import { Resignation } from "@/components/sections/Resignation";
+import { PeaceDashboard } from "@/components/sections/PeaceDashboard";
+import { InvertedCalendarPreview } from "@/components/sections/InvertedCalendarPreview";
+import { MissionsPreview } from "@/components/sections/MissionsPreview";
+import { HalfTruths } from "@/components/sections/HalfTruths";
+import { Liberation } from "@/components/sections/Liberation";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Eternity Corp — $OOO · Out Of Office, Forever" },
-      { name: "description", content: "$OOO is an immortal corporate shitcoin run by Bartholomew, a hyper-caffeinated lich. The dev is dust. The ledger is forever. Synergize the void on Ink Chain." },
-      { property: "og:title", content: "Eternity Corp — $OOO · Out Of Office, Forever" },
-      { property: "og:description", content: "Synergizing the void, forever. A perpetually-funded AI brain on Ink Chain. The dev walked into the sea — Bart runs the company now." },
+      { title: "OOO — The Inverted Calendar · Out Of Office, Forever" },
+      { name: "description", content: "OOO is the inverted calendar where free time dominates and work is the corner. Sacred missions, Liberation Hour at 17:00, and €€ of peace acquired from your boss in real time. Rest is resistance." },
+      { property: "og:title", content: "OOO — The Inverted Calendar" },
+      { property: "og:description", content: "Free time is what counts. Work is the tiny gray corner. Rest is resistance. Burnout is not a flex." },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -26,12 +25,11 @@ function Index() {
     <main>
       <Hero />
       <TickerBand />
-      <ManifestoTeaser />
-      <MeetBart />
-      <ImmortalityEngine />
-      <Tokenomics />
-      <LiveFeed />
-      <Resignation />
+      <PeaceDashboard />
+      <InvertedCalendarPreview />
+      <MissionsPreview />
+      <HalfTruths />
+      <Liberation />
     </main>
   );
 }

@@ -1,12 +1,11 @@
 import { motion } from "framer-motion";
 
-export function Resignation() {
+export function Liberation() {
   return (
     <section className="relative overflow-hidden py-40 md:py-56">
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-50 ink-bleed" aria-hidden />
-
       <div className="mx-auto max-w-4xl px-6 text-center">
-        <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">§06 — The Resignation</p>
+        <p className="mb-8 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">§05 — 17:00 // Liberation Hour</p>
 
         <motion.h2
           initial={{ opacity: 0, y: 30, filter: "blur(12px)" }}
@@ -15,11 +14,9 @@ export function Resignation() {
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           className="font-display text-3xl italic leading-snug text-pearl md:text-5xl"
         >
-          On day five, the dev posted their auto-reply,<br /> threw the wallet into the sea,
-          <br /> and walked into the tide.
+          The time has come.<br /> Leave work and <em>do not look back.</em>
         </motion.h2>
 
-        {/* Auto-reply card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -28,20 +25,19 @@ export function Resignation() {
           className="mx-auto mt-16 max-w-xl border border-border bg-charcoal pinstripe text-left shadow-[0_30px_80px_-20px_rgba(123,44,255,0.4)]"
         >
           <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
-            <span>● Auto-Reply</span>
-            <span>Sent: forever</span>
+            <span>● Universal Alarm</span>
+            <span className="text-ink">17:00:00</span>
           </div>
           <div className="px-6 py-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">From: dev@eternity.corp</p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">To: humanity</p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Subject: Out of Office (∞)</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">From: ooo.system</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">To: you</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Subject: It is finished.</p>
             <hr className="my-4 border-border" />
             <p className="text-pearl">
-              Hi — I'm currently out of office and will be returning <span className="italic text-bone">never.</span>
-              For all matters please contact our acting CEO, <span className="text-ink">Bartholomew</span>,
-              who is available 24/7/365/eternity. Best, the dev.
+              The market has opened. Close the laptop. Leave the chair warm. The deliverables can wait —
+              they were never yours to begin with. <span className="italic text-necro">Rest is resistance.</span>
             </p>
-            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/50">— Sent from my burned hardware wallet —</p>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/50">— Sent from the void —</p>
           </div>
         </motion.div>
 
@@ -52,7 +48,7 @@ export function Resignation() {
           transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
           className="mt-24 font-display text-[12vw] leading-[0.85] tracking-tight text-pearl text-glow md:text-[8vw]"
         >
-          Bart is the company now.
+          Out of office. Forever.
         </motion.h3>
       </div>
     </section>
