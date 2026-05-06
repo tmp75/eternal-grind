@@ -16,9 +16,9 @@ export function SiteFooter() {
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-bone/60">Departments</p>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><Link to="/calendar" className="text-pearl hover:text-ink transition-colors">→ Inverted Calendar</Link></li>
+              <li><Link to="/calendar" className="text-pearl hover:text-ink transition-colors">→ Inverse Calendar</Link></li>
               <li><Link to="/missions" className="text-pearl hover:text-ink transition-colors">→ Sacred Missions</Link></li>
-              <li><Link to="/academy" className="text-pearl hover:text-ink transition-colors">→ OOO Academy</Link></li>
+              <li><Link to="/academy" className="text-pearl hover:text-ink transition-colors">→ $OOO Academy</Link></li>
               <li><Link to="/ticker" className="text-pearl hover:text-ink transition-colors">→ $OOO Ticker</Link></li>
             </ul>
           </div>
@@ -26,15 +26,15 @@ export function SiteFooter() {
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-bone/60">Disclaimer</p>
             <p className="mt-4 text-[11px] leading-relaxed text-bone/60">
-              OOO is a satire. The doctor's note is parody. Lich Points have no monetary value. The market is
-              imaginary. The rest, however, is real. Take it. By scrolling you agree to leave on time.
+              Not financial advice. Definitely lifestyle advice. The doctor's note is parody. The market is
+              imaginary. The rest, however, is real. Take it.
             </p>
           </div>
         </div>
 
         <div className="mt-12 flex flex-col items-start justify-between gap-2 border-t border-border/40 pt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/50 md:flex-row md:items-center">
-          <span>© ∞ OOO — All hours reclaimed.</span>
-          <span>The Inverted Calendar // Out of Office</span>
+          <span>© $OOO · Auto-reply enabled indefinitely</span>
+          <span>Out of Office · Forever</span>
         </div>
       </div>
     </footer>

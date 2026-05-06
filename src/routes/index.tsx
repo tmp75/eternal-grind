@@ -1,19 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Hero } from "@/components/sections/Hero";
 import { TickerBand } from "@/components/sections/TickerBand";
-import { PeaceDashboard } from "@/components/sections/PeaceDashboard";
+import { SurvivalTactics } from "@/components/sections/SurvivalTactics";
+import { BathroomROI } from "@/components/sections/BathroomROI";
 import { InvertedCalendarPreview } from "@/components/sections/InvertedCalendarPreview";
+import { TokenomicsTerminal } from "@/components/sections/TokenomicsTerminal";
 import { MissionsPreview } from "@/components/sections/MissionsPreview";
-import { HalfTruths } from "@/components/sections/HalfTruths";
 import { Liberation } from "@/components/sections/Liberation";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "OOO — The Inverted Calendar · Out Of Office, Forever" },
-      { name: "description", content: "OOO is the inverted calendar where free time dominates and work is the corner. Sacred missions, Liberation Hour at 17:00, and €€ of peace acquired from your boss in real time. Rest is resistance." },
-      { property: "og:title", content: "OOO — The Inverted Calendar" },
-      { property: "og:description", content: "Free time is what counts. Work is the tiny gray corner. Rest is resistance. Burnout is not a flex." },
+      { title: "$OOO — Out Of Office | The Anti-Work Meme on Solana" },
+      { name: "description", content: "A digital sanctuary for the burnt-out corporate soul. $OOO on Solana via Pump.fun. The only asset that appreciates when you're not working." },
+      { property: "og:title", content: "$OOO — Out Of Office" },
+      { property: "og:description", content: "Mint your freedom. The only asset that appreciates when you're not working." },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -25,10 +26,11 @@ function Index() {
     <main>
       <Hero />
       <TickerBand />
-      <PeaceDashboard />
+      <SurvivalTactics />
+      <BathroomROI />
       <InvertedCalendarPreview />
       <MissionsPreview />
-      <HalfTruths />
+      <TokenomicsTerminal />
       <Liberation />
     </main>
   );
