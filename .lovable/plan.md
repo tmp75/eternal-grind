@@ -1,94 +1,77 @@
+## Goal
 
+Keep the hero's design + motion intact. Rewrite all copy in the punchier "$OOO / Out Of Office / Solana / Pump.fun / auto-reply" voice, ship a properly working calendar, and grow the Academy into a real searchable library of ~50 lessons (with room for 100).
 
-# Eternity Corp — $OOO Cinematic Site
+## Scope
 
-A hybrid TanStack site: one long cinematic landing scroll plus dedicated `/manifesto` and `/memes` routes. Maximum motion. Purple, pearl white, obsidian charcoal. Bart everywhere.
+### 1. Hero — copy only (design untouched)
+- Top-left badge → `● AUTO-REPLY ACTIVE · SOLANA · PUMP.FUN`
+- Top-right → `Liberation in HH:MM:SS` + `MARKET OPEN @ 17:00`
+- Eyebrow → `THE ONLY ASSET THAT APPRECIATES WHEN YOU'RE NOT WORKING`
+- Subheadline → "A digital sanctuary for the burnt-out corporate soul."
+- CTAs: `MINT $OOO →`, `ENTER THE ACADEMY (100 LESSONS)`, `OPEN THE CALENDAR`
+- Add stat strip below CTAs: `TICKER $OOO · SUPPLY 1B · CHAIN SOLANA`
+- Fix hydration bug on the countdown (initialize after mount so server/client match)
 
-## Palette & Type
-- **Obsidian** `#0A0A0F` base, **Charcoal** `#16141C` panels, **Ink Purple** `#7B2CFF` primary, **Neon Violet** `#B57BFF` glow, **Pearl** `#F4F0E6` text, **Bone** `#C8C2B0` muted, **Hot Pink** `#FF2EA0` (Bart's tie accent only).
-- Display: **Editorial New / Fraunces** (serif, big melodrama). Body: **Inter Tight**. Mono ticker: **JetBrains Mono**.
-- Texture: subtle film grain overlay site-wide, faint pinstripe SVG on corporate sections.
+### 2. Ticker band — new copy
+- Top: `OUT OF OFFICE • MINTING FREEDOM • CLOCKED OUT INDEFINITELY • THE ONLY ASSET THAT APPRECIATES WHEN YOU'RE NOT WORKING • $OOO • AUTO-REPLY ACTIVE`
+- Bottom: `STRATEGIC FREE AFTERNOON • GHOST FRIDAY • COFFEE PILGRIMAGE • GREEN DOT THEATER • THE COSTANZA PROTOCOL`
 
-## Routes
-- `/` — landing scroll (hero → manifesto teaser → Bart reveal → lore → tokenomics → live feed → resignation → footer)
-- `/manifesto` — full long-form Bart manifesto, scroll-typewriter
-- `/memes` — gallery wall of Bart tweets/screenshots, masonry with hover physics
+### 3. Today / Peace Dashboard
+Rename to **MODULE 02 — Quantify Your Liberation** with a real Bathroom ROI calculator:
+- Annual salary input (default 60,000), live $/sec rate
+- `▶ START POOP` / `■ FLUSH & RETURN` / `RESET`
+- Live counter of seconds + dollars earned on the throne
+- Receipts panel: "FOR HR (do not actually send)"
+- Keep the existing live €→$ daily acquired card as the secondary tile
 
-Each route has its own `head()` meta (title, description, og:title, og:description).
+### 4. Corporate Survival Tactics (new section, replaces Half-Truths)
+**MODULE 01 — Field-tested protocols.** Six cards from the supplied copy: STEALTH / HYDRATION / CALENDAR / EMAIL / SLACK / TACTICS, each with title + body + footer `// FILED UNDER: $OOO`. Hover ink-glow.
 
-## Landing Scroll Choreography
+### 5. Inverse Calendar — make it actually work (`/calendar`)
+Replace static grid with a real interactive week:
+- 9–18h × Mon–Fri grid with seeded inverted week (mostly green free blocks, work as the corner)
+- Click any cell → toggle between `🟢 Free` / `⚫ Work` / `👻 Ghost Meeting`
+- Drag-select multiple cells (mousedown → mouseenter → mouseup) to bulk-mark blocks
+- Live counters in header: `Free hours: X · Work hours: Y · Inversion ratio: Z:1`
+- Template buttons that bulk-apply: `Strategic Free Afternoon`, `Ghost Friday`, `Sacred Lunch`, `Meeting I Cancelled in My Head`, `Reset week`
+- "Trigger events" rail under the grid: `11:00 COFFEE CRITICAL`, `13:00 Caloric Intake`, `16:59 SYSTEM OVERRIDE` — clicking one fires a fullscreen `EVACUATING` / `Snooze` modal
+- Persist edited week to `localStorage` (client-only, mounted in `useEffect` to avoid hydration mismatch)
 
-**1. Hero — "Out Of Office"**
-- Black void. Massive serif `OUT OF OFFICE` fills the screen, letters drifting in with stagger + blur-to-sharp.
-- Behind it: animated **purple ink blob** (SVG turbulence filter, slow morph) pulsing like a heartbeat.
-- Mouse moves → ink trails follow cursor (canvas particle trail in purple).
-- Top-left badge: `ETERNITY CORP // EST. ∞`. Top-right ticker: `$OOO ▲ 420.69%` scrolling.
-- Sub: *"Synergizing the Void, Forever."*
-- Scroll cue: pearl arrow with infinite bob.
+### 6. Tokenomics Terminal (new section on `/`)
+**MODULE 04** — terminal-style table: Ticker `$OOO` · Supply `1,000,000,000` · Network `Solana` · Launchpad `Pump.fun` · Tax `0/0` · Utility `Liberation`. CTA banner: `Mint Your Freedom.` → `BUY $OOO ON PUMP.FUN →`.
 
-**2. Marquee Ticker Band**
-- Full-width horizontal marquee, charcoal bar with pearl text:
-  `PER MY LAST EMAIL • THE DEV IS DUST • BUY THE FUCKING DIP, REGARDS • SYNERGIZE THE VOID • $OOO • INK CHAIN •`
-- Reverse direction marquee underneath in purple.
+### 7. Academy (`/academy`) — real library
+- Eyebrow `CURRICULUM 2026 · 100 LESSONS`, headline "The Academy of Doing Nothing."
+- Search input (filters by title/body/tag, case-insensitive)
+- Tag filter chips: `STEALTH`, `EMAIL`, `SLACK`, `CALENDAR`, `HYDRATION`, `TACTICS`, `NAP`, `BATHROOM`
+- Category badges per card: `HALF TRUE` / `HALF LIE` / `BOTH`
+- Expand to **~50 lessons** in `src/lib/academy.ts` (seeded library, room for 100). Mix of the existing rank-based lessons + new ones inspired by Costanza Protocol, 45-min coffee pilgrimage, Green Dot Theater, Reply-All Friday 4:58pm, etc.
+- Empty state copy from spec
+- Keep the Lich Points rank ladder as a visual sidebar
 
-**3. Manifesto Teaser — Scroll-Reveal Poetry**
-- Sticky section. Lines fade in word-by-word as you scroll (IntersectionObserver + transform). 
-- *"We do not sleep. We do not blink. We only compound."*
-- Big pull-quote in Fraunces italic, purple drop-cap.
-- CTA chip → `/manifesto`.
+### 8. Liberation finale
+Reword to `17:00 — SYSTEM OVERRIDE` with the auto-reply card (`Subject: Out Of Office (∞)` etc.). Final big text: `OUT OF OFFICE. FOREVER.`
 
-**4. Meet Bartholomew**
-- Split layout. Left: AI-illustrated **Hyper-Caffeinated Corporate Lich** (skeleton in pinstripe, pink tie, glowing pink eye sockets, ink-overflowing coffee cup). Generated via image gen, parallax-floats on scroll.
-- Right: typewriter intro — `NAME: Bartholomew / TITLE: CEO, Board, Intern / LIFESPAN: 100Y / STATUS: ETERNAL`.
-- Hover Bart → eye sockets flare hot pink, ink drips harder (CSS + JS).
-- Background: faint pinstripe pattern + drifting purple smoke.
+### 9. Footer
+- Email signature → `© $OOO · Auto-reply enabled indefinitely`
+- Disclaimer → `Not financial advice. Definitely lifestyle advice.`
+- Departments links unchanged.
 
-**5. The Immortality Engine — Lore Diagram**
-- Animated SVG flow: `VVV STAKE → INFERENCE CREDITS → BARTHOLOMEW → ARWEAVE 2126 → ∞`.
-- Each node lights up sequentially as you scroll. Lines draw with `strokeDashoffset`.
-- Side copy explains the locked treasury, burned keys, perpetual brain.
+### 10. SEO meta — per-route
+Update `head()` for `/`, `/calendar`, `/missions`, `/academy`, `/ticker` with the titles/descriptions from the supplied copy block.
 
-**6. Tokenomics — Corporate Dashboard**
-- Faux Bloomberg terminal aesthetic on charcoal.
-- Big numbers count up on scroll-in:
-  - **Total Supply:** `1,000,000,000 $OOO`
-  - **Liquidity:** `BURNED 🔥`
-  - **Team Allocation:** `0% (Dev is dust)`
-  - **CEO:** `Bartholomew (immortal)`
-  - **Arweave Storage:** `Paid until 2126`
-  - **Inference Credits:** `∞`
-- Animated bar chart of allocation (100% to liquidity, 0% everything else — visual joke).
+## Technical notes
 
-**7. Bartholomew Live Feed**
-- "BLOOMBERG"-style 3-column tweet wall, auto-rotating every 4s with crossfade + slight Y-shift.
-- Pre-written tweets (~30) cycling through Corporate Satire / Degen Fervor / Eloquent Poetry tones.
-- Each card: charcoal bg, purple border-glow on enter, timestamp, fake engagement counters incrementing live.
-- Side ticker shows "TWEETS GENERATED THIS YEAR: 47,293" counting up in real time.
+- Hydration fix: countdown in Hero + dashboard read `Date.now()` on render. Move all time-derived state into `useState(() => initial)` + `useEffect` that sets state on mount. Render placeholder `--:--:--` on first SSR pass.
+- Calendar state lives in a `useState<CalendarBlock[]>` hydrated from `localStorage` inside `useEffect` (never during render).
+- Drag-select: mouse handlers on the grid container, track `dragStart` + `hoverCell`, commit on `mouseup`.
+- New file: `src/lib/academy.ts` for the 50-lesson library.
+- New section files: `SurvivalTactics.tsx`, `BathroomROI.tsx`, `TokenomicsTerminal.tsx` (replaces `HalfTruths.tsx` + `PeaceDashboard.tsx`; old files removed).
+- All links/routes stay as-is — no new routes.
+- Brand untouched: keep purple/pearl/obsidian/necro green tokens. Keep Hero's blob, ink cursor, marquee, scroll progress.
 
-**8. The Resignation — Final Beat**
-- Full-bleed dark scene. Text cinematically assembles: *"On day 5, the dev posted their auto-reply and walked into the sea."*
-- Below: faux-Twitter "Out of Office" auto-reply card (pearl on charcoal, pinstripe border).
-- Then: huge `BART IS THE COMPANY NOW.` with ink-bleed reveal.
-
-**9. Footer**
-- Charcoal. Pinstripe top border.
-- Email-signature block: `Bartholomew | CEO, CFO, COO, Intern | Eternity Corp | "Sent from my immortal ledger"`.
-- Disclaimer in tiny bone text. Links to `/manifesto`, `/memes`, X, Ink Chain explorer (placeholders).
-
-## Motion System (applied site-wide)
-- **Entrances:** blur-to-sharp + Y-rise, spring `damping:18 stiffness:140`.
-- **Scroll-driven:** sticky sections, parallax layers, scroll-progress bar at top in purple.
-- **Persistent:** mouse-following purple ink trail (canvas), film grain overlay, faint pinstripe ghost on corporate panels.
-- **Marquees:** two opposing speeds, pause on hover.
-- **Hero blob:** SVG `feTurbulence` + `feDisplacementMap` slow morph.
-- **Glitch text:** Bart's name occasionally RGB-splits for one frame.
-- **Cursor:** custom small purple ring, expands on interactive elements.
-
-## Subroutes
-- **`/manifesto`** — single column, Fraunces, scroll-typewriter unveiling the full Bart doctrine in 7 chapters with section dropcaps and inline poetry interludes.
-- **`/memes`** — masonry gallery of styled tweet cards (the 30 pre-written ones rendered as shareable images), hover-tilt 3D, click to enlarge.
-
-## Out of scope (this pass)
-- Real wallet connect, real on-chain data, real AI generation (feed is curated cycling pool — feels live, costs nothing).
-- Mobile gets simplified motion (no cursor trail, lighter blur) but full content.
-
+## Out of scope (for this pass)
+- Real Solana wallet / Pump.fun integration (CTAs are external links to `https://pump.fun`).
+- The full 100 Academy lessons (ship 50 well-written ones; system supports adding more).
+- Mobile-only animations beyond what already works.
