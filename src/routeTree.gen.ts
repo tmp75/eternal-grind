@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TickerRouteImport } from './routes/ticker'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AcademyRouteImport } from './routes/academy'
@@ -18,6 +19,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const TickerRoute = TickerRouteImport.update({
   id: '/ticker',
   path: '/ticker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MissionsRoute = MissionsRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/academy': typeof AcademyRoute
   '/calendar': typeof CalendarRoute
   '/missions': typeof MissionsRoute
+  '/profile': typeof ProfileRoute
   '/ticker': typeof TickerRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/academy': typeof AcademyRoute
   '/calendar': typeof CalendarRoute
   '/missions': typeof MissionsRoute
+  '/profile': typeof ProfileRoute
   '/ticker': typeof TickerRoute
 }
 export interface FileRoutesById {
@@ -61,14 +69,28 @@ export interface FileRoutesById {
   '/academy': typeof AcademyRoute
   '/calendar': typeof CalendarRoute
   '/missions': typeof MissionsRoute
+  '/profile': typeof ProfileRoute
   '/ticker': typeof TickerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/academy' | '/calendar' | '/missions' | '/ticker'
+  fullPaths:
+    | '/'
+    | '/academy'
+    | '/calendar'
+    | '/missions'
+    | '/profile'
+    | '/ticker'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/academy' | '/calendar' | '/missions' | '/ticker'
-  id: '__root__' | '/' | '/academy' | '/calendar' | '/missions' | '/ticker'
+  to: '/' | '/academy' | '/calendar' | '/missions' | '/profile' | '/ticker'
+  id:
+    | '__root__'
+    | '/'
+    | '/academy'
+    | '/calendar'
+    | '/missions'
+    | '/profile'
+    | '/ticker'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -76,6 +98,7 @@ export interface RootRouteChildren {
   AcademyRoute: typeof AcademyRoute
   CalendarRoute: typeof CalendarRoute
   MissionsRoute: typeof MissionsRoute
+  ProfileRoute: typeof ProfileRoute
   TickerRoute: typeof TickerRoute
 }
 
@@ -86,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/ticker'
       fullPath: '/ticker'
       preLoaderRoute: typeof TickerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/missions': {
@@ -124,8 +154,18 @@ const rootRouteChildren: RootRouteChildren = {
   AcademyRoute: AcademyRoute,
   CalendarRoute: CalendarRoute,
   MissionsRoute: MissionsRoute,
+  ProfileRoute: ProfileRoute,
   TickerRoute: TickerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

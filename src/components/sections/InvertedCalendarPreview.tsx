@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import { Sparkles, Briefcase } from "lucide-react";
 import { buildDefaultWeek } from "@/lib/ooo";
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
@@ -39,20 +40,19 @@ export function InvertedCalendarPreview() {
                 const cell = cells.find((c) => c.day === di && c.hour === h);
                 const free = cell?.type === "free";
                 const work = cell?.type === "work";
+                const Icon = free ? Sparkles : Briefcase;
                 return (
                   <motion.div
                     key={di}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
+                    initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
                     transition={{ duration: 0.5, delay: (h - 9) * 0.04 + di * 0.02 }}
                     className={`relative min-h-[44px] border-r border-border p-2 last:border-r-0 ${
                       free ? "bg-ink/15" : work ? "bg-bone/5" : ""
                     }`}
                   >
                     {cell?.label && (
-                      <span className={`font-mono text-[9px] uppercase tracking-[0.2em] ${free ? "text-necro" : "text-bone/60"}`}>
-                        {free ? "🟢" : "⚫"} {cell.label}
+                      <span className={`inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-[0.2em] ${free ? "text-necro" : "text-bone/60"}`}>
+                        <Icon className="h-2.5 w-2.5" /> {cell.label}
                       </span>
                     )}
                   </motion.div>
