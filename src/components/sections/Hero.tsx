@@ -2,6 +2,8 @@ import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { WORK_END_HOUR, PUMP_FUN_URL } from "@/lib/ooo";
+import { useProfile } from "@/lib/profile";
+import { LESSONS } from "@/lib/academy";
 
 const WORDS = ["OUT", "OF", "OFFICE."];
 
@@ -18,11 +20,15 @@ function formatCountdown(now: Date) {
 
 export function Hero() {
   const [countdown, setCountdown] = useState<string | null>(null);
+  const [profile, hydrated] = useProfile();
   useEffect(() => {
     setCountdown(formatCountdown(new Date()));
     const id = setInterval(() => setCountdown(formatCountdown(new Date())), 1000);
     return () => clearInterval(id);
   }, []);
+  const masteredLabel = hydrated
+    ? `Enter the Academy (${profile.completedLessons.length} / ${LESSONS.length} mastered)`
+    : "Enter the Academy (100 lessons)";
 
   return (
     <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden">
@@ -97,7 +103,7 @@ export function Hero() {
             Mint $OOO →
           </a>
           <Link to="/academy" className="border border-border bg-charcoal/40 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl">
-            Enter the Academy (100 lessons)
+            {masteredLabel}
           </Link>
           <Link to="/calendar" className="border border-border bg-charcoal/40 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl">
             Open the calendar
