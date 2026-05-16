@@ -6,6 +6,7 @@ const ITEMS = [
   { to: "/missions", label: "Missions" },
   { to: "/academy", label: "Academy" },
   { to: "/ticker", label: "$OOO" },
+  { to: "/profile", label: "Profile" },
 ] as const;
 
 export function SiteNav() {

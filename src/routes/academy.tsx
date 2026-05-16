@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { CircleCheck, Circle } from "lucide-react";
 import { LESSONS, LESSON_TAGS, type LessonTag, type LessonTruth } from "@/lib/academy";
+import { useProfile, toggleLesson, rankFor, RANKS } from "@/lib/profile";
 
 export const Route = createFileRoute("/academy")({
   head: () => ({
@@ -15,14 +17,6 @@ export const Route = createFileRoute("/academy")({
   component: AcademyPage,
 });
 
-const RANKS = [
-  { name: "Intern", xp: 0 },
-  { name: "Office Drone", xp: 100 },
-  { name: "Senior Slacker", xp: 300 },
-  { name: "Apprentice", xp: 700 },
-  { name: "Lich CEO", xp: 1500 },
-];
-
 const TRUTH_STYLES: Record<LessonTruth, string> = {
   "HALF TRUE": "border-necro/50 bg-necro/10 text-necro",
   "HALF LIE":  "border-pink/50 bg-pink/10 text-pink",
@@ -30,13 +24,18 @@ const TRUTH_STYLES: Record<LessonTruth, string> = {
 };
 
 function AcademyPage() {
+  const [profile, hydrated] = useProfile();
   const [q, setQ] = useState("");
   const [tag, setTag] = useState<LessonTag | "ALL">("ALL");
+  const [learnedFilter, setLearnedFilter] = useState<"all" | "learned" | "unlearned">("all");
 
+  const completed = new Set(profile.completedLessons);
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return LESSONS.filter((l) => {
       if (tag !== "ALL" && l.tag !== tag) return false;
+      if (learnedFilter === "learned" && !completed.has(l.n)) return false;
+      if (learnedFilter === "unlearned" && completed.has(l.n)) return false;
       if (!needle) return true;
       return (
         l.title.toLowerCase().includes(needle) ||
@@ -44,7 +43,9 @@ function AcademyPage() {
         l.tag.toLowerCase().includes(needle)
       );
     });
-  }, [q, tag]);
+  }, [q, tag, learnedFilter, completed]);
+
+  const rank = rankFor(profile.xp);
 
   return (
     <main className="pt-24">
@@ -65,20 +66,31 @@ function AcademyPage() {
         </div>
       </section>
 
-      {/* Ranks */}
-      <section className="border-b border-border bg-charcoal py-12">
-        <div className="mx-auto max-w-[1400px] px-6 md:px-12">
-          <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.4em] text-violet">Lich Points · XP Ladder</p>
-          <div className="grid gap-3 md:grid-cols-5">
-            {RANKS.map((r, i) => (
-              <div key={r.name} className="border border-border bg-obsidian p-4">
-                <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">Rank 0{i + 1}</p>
-                <p className="mt-1 font-display text-xl text-pearl">{r.name}</p>
-                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.3em] text-necro">{r.xp}+ Lich pts</p>
+      {/* XP HUD */}
+      <section className="border-b border-border bg-charcoal py-8">
+        <div className="mx-auto grid max-w-[1400px] gap-6 px-6 md:grid-cols-[1.2fr_2fr] md:px-12">
+          <div className="border border-ink/40 bg-obsidian p-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Your rank</p>
+            <p className="mt-1 font-display text-3xl text-pearl text-glow">{rank.current.name}</p>
+            <div className="mt-4 h-2 w-full overflow-hidden border border-border bg-charcoal">
+              <div className="h-full bg-ink transition-all" style={{ width: `${Math.round(rank.progress * 100)}%` }} />
+            </div>
+            <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
+              {hydrated ? `${profile.xp} XP` : "— XP"} {rank.next ? `· ${rank.next.xp - profile.xp} to ${rank.next.name}` : "· MAX"}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            {RANKS.map((r) => (
+              <div key={r.name} className={`border p-3 ${r.name === rank.current.name ? "border-ink bg-ink/10 shadow-[0_0_20px_var(--ink)]" : "border-border bg-obsidian opacity-60"}`}>
+                <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">{r.xp}+ pts</p>
+                <p className="mt-1 font-display text-lg text-pearl">{r.name}</p>
               </div>
             ))}
           </div>
         </div>
+        <p className="mx-auto mt-4 max-w-[1400px] px-6 font-mono text-[10px] uppercase tracking-[0.3em] text-necro md:px-12">
+          Lessons mastered: {completed.size} / {LESSONS.length}
+        </p>
       </section>
 
       {/* Search + filters */}
@@ -86,30 +98,29 @@ function AcademyPage() {
         <div className="mx-auto max-w-[1400px] px-6 md:px-12">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
             <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
+              value={q} onChange={(e) => setQ(e.target.value)}
               placeholder="Search lessons (e.g. 'nap', 'slack', 'bathroom')"
               className="w-full max-w-md border border-border bg-charcoal px-4 py-3 font-mono text-sm text-pearl placeholder:text-bone/40 focus:border-ink focus:outline-none"
             />
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setTag("ALL")}
+              {(["all", "learned", "unlearned"] as const).map((f) => (
+                <button key={f} onClick={() => setLearnedFilter(f)}
+                  className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${
+                    learnedFilter === f ? "border-necro bg-necro/10 text-necro" : "border-border bg-charcoal text-pearl hover:border-pearl"
+                  }`}>
+                  {f}
+                </button>
+              ))}
+              <span className="mx-1 w-px self-stretch bg-border" />
+              <button onClick={() => setTag("ALL")}
                 className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${
                   tag === "ALL" ? "border-ink bg-ink/20 text-ink" : "border-border bg-charcoal text-pearl hover:border-pearl"
-                }`}
-              >
-                All
-              </button>
+                }`}>All</button>
               {LESSON_TAGS.map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setTag(t)}
+                <button key={t} onClick={() => setTag(t)}
                   className={`border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${
                     tag === t ? "border-ink bg-ink/20 text-ink" : "border-border bg-charcoal text-pearl hover:border-pearl"
-                  }`}
-                >
-                  {t}
-                </button>
+                  }`}>{t}</button>
               ))}
             </div>
           </div>
@@ -126,29 +137,39 @@ function AcademyPage() {
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((l, i) => (
-              <motion.article
-                key={l.n}
-                initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
-                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                viewport={{ once: true, margin: "-5%" }}
-                transition={{ delay: (i % 9) * 0.04, duration: 0.5 }}
-                className="group flex h-full flex-col border border-border bg-charcoal p-6 transition-all hover:border-ink hover:shadow-[0_0_30px_color-mix(in_oklab,var(--ink)_30%,transparent)]"
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">Lesson {String(l.n).padStart(3, "0")}</span>
-                  <span className={`rounded-sm border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.3em] ${TRUTH_STYLES[l.truth]}`}>
-                    {l.truth}
-                  </span>
-                </div>
-                <h3 className="font-display text-2xl leading-tight text-pearl">{l.title}</h3>
-                <p className="mt-3 flex-1 text-bone">{l.body}</p>
-                <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] uppercase tracking-[0.3em]">
-                  <span className="text-ink">#{l.tag}</span>
-                  <span className="text-bone/60">{l.rank} · +{l.xp} XP</span>
-                </div>
-              </motion.article>
-            ))}
+            {filtered.map((l, i) => {
+              const done = completed.has(l.n);
+              return (
+                <motion.article
+                  key={l.n}
+                  initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+                  whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  viewport={{ once: true, margin: "-5%" }}
+                  transition={{ delay: (i % 9) * 0.04, duration: 0.5 }}
+                  className={`group flex h-full flex-col border bg-charcoal p-6 transition-all hover:border-ink hover:shadow-[0_0_30px_color-mix(in_oklab,var(--ink)_30%,transparent)] ${done ? "border-necro/60" : "border-border"}`}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">Lesson {String(l.n).padStart(3, "0")}</span>
+                    <span className={`rounded-sm border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.3em] ${TRUTH_STYLES[l.truth]}`}>{l.truth}</span>
+                  </div>
+                  <h3 className="font-display text-2xl leading-tight text-pearl">{l.title}</h3>
+                  <p className="mt-3 flex-1 text-bone">{l.body}</p>
+                  <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] uppercase tracking-[0.3em]">
+                    <span className="text-ink">#{l.tag}</span>
+                    <span className="text-bone/60">{l.rank} · +{l.xp} XP</span>
+                  </div>
+                  <button
+                    onClick={() => toggleLesson(l.n, l.xp)}
+                    className={`mt-3 inline-flex items-center justify-center gap-2 border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${
+                      done ? "border-necro bg-necro/10 text-necro hover:bg-necro/20" : "border-border bg-obsidian text-pearl hover:border-ink hover:text-ink"
+                    }`}
+                  >
+                    {done ? <CircleCheck className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
+                    {done ? "Mastered" : "Mark as learned"}
+                  </button>
+                </motion.article>
+              );
+            })}
           </div>
         )}
 

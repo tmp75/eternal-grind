@@ -16,24 +16,27 @@ export function MissionsPreview() {
         </p>
 
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {MISSIONS.map((m, i) => (
-            <motion.div
-              key={m.id}
-              initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-              whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              viewport={{ once: true, margin: "-10%" }}
-              transition={{ delay: i * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="group relative border border-border bg-charcoal p-6 transition-all hover:border-ink hover:shadow-[0_0_40px_color-mix(in_oklab,var(--ink)_30%,transparent)]"
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="text-4xl">{m.emoji}</span>
-                <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">{m.duration}</span>
-              </div>
-              <p className="mt-4 font-display text-2xl text-pearl">{m.title}</p>
-              <p className="mt-2 text-sm text-bone">{m.description}</p>
-              <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-necro">● Status: {m.status}</p>
-            </motion.div>
-          ))}
+          {MISSIONS.map((m, i) => {
+            const Icon = m.icon;
+            return (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+                whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                viewport={{ once: true, margin: "-10%" }}
+                transition={{ delay: i * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                className="group relative border border-border bg-charcoal p-6 transition-all hover:border-ink hover:shadow-[0_0_40px_color-mix(in_oklab,var(--ink)_30%,transparent)]"
+              >
+                <div className="flex items-baseline justify-between">
+                  <Icon className="h-8 w-8 text-ink" strokeWidth={1.5} />
+                  <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">{m.duration}</span>
+                </div>
+                <p className="mt-4 font-display text-2xl text-pearl">{m.title}</p>
+                <p className="mt-2 text-sm text-bone">{m.description}</p>
+                <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-necro">● Status: {m.status}</p>
+              </motion.div>
+            );
+          })}
         </div>
 
         <div className="mt-12">

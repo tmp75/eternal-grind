@@ -1,77 +1,85 @@
-## Goal
+# Plan — Profile, Calendar Sync, Icons, Academy Points
 
-Keep the hero's design + motion intact. Rewrite all copy in the punchier "$OOO / Out Of Office / Solana / Pump.fun / auto-reply" voice, ship a properly working calendar, and grow the Academy into a real searchable library of ~50 lessons (with room for 100).
+## 1. Local user profile (foundation for everything else)
 
-## Scope
+New `src/lib/profile.ts` — a `localStorage`-backed profile (`ooo.profile.v1`) holding:
+- `handle` (default "Anonymous Slacker"), `joinedAt`, `salary` (for ROI), `rank`, `xp`
+- `completedLessons: number[]` (Academy progress)
+- `calendar` edits (moved here from `ooo.calendar.v1`)
+- `externalCalendars: { id, provider: "google"|"apple"|"ics", name, url, lastSync }[]`
+- `externalEvents: ExternalEvent[]` (read-only, fetched from ICS)
 
-### 1. Hero — copy only (design untouched)
-- Top-left badge → `● AUTO-REPLY ACTIVE · SOLANA · PUMP.FUN`
-- Top-right → `Liberation in HH:MM:SS` + `MARKET OPEN @ 17:00`
-- Eyebrow → `THE ONLY ASSET THAT APPRECIATES WHEN YOU'RE NOT WORKING`
-- Subheadline → "A digital sanctuary for the burnt-out corporate soul."
-- CTAs: `MINT $OOO →`, `ENTER THE ACADEMY (100 LESSONS)`, `OPEN THE CALENDAR`
-- Add stat strip below CTAs: `TICKER $OOO · SUPPLY 1B · CHAIN SOLANA`
-- Fix hydration bug on the countdown (initialize after mount so server/client match)
+New `useProfile()` hook + tiny event emitter so Hero / Academy / Calendar / Footer all react to changes. SSR-safe (hydrate in `useEffect`, render placeholders first).
 
-### 2. Ticker band — new copy
-- Top: `OUT OF OFFICE • MINTING FREEDOM • CLOCKED OUT INDEFINITELY • THE ONLY ASSET THAT APPRECIATES WHEN YOU'RE NOT WORKING • $OOO • AUTO-REPLY ACTIVE`
-- Bottom: `STRATEGIC FREE AFTERNOON • GHOST FRIDAY • COFFEE PILGRIMAGE • GREEN DOT THEATER • THE COSTANZA PROTOCOL`
+New `/profile` route — minimal page: handle, salary, rank ladder progress bar, XP total, completed lessons count, connected calendars list, "Export / Reset profile" buttons.
 
-### 3. Today / Peace Dashboard
-Rename to **MODULE 02 — Quantify Your Liberation** with a real Bathroom ROI calculator:
-- Annual salary input (default 60,000), live $/sec rate
-- `▶ START POOP` / `■ FLUSH & RETURN` / `RESET`
-- Live counter of seconds + dollars earned on the throne
-- Receipts panel: "FOR HR (do not actually send)"
-- Keep the existing live €→$ daily acquired card as the secondary tile
+> *Why local, not Cloud auth*: user said "profile **or local memory**". Local keeps zero-friction. The data shape is designed so we can later swap the storage layer for Lovable Cloud + auth without touching components.
 
-### 4. Corporate Survival Tactics (new section, replaces Half-Truths)
-**MODULE 01 — Field-tested protocols.** Six cards from the supplied copy: STEALTH / HYDRATION / CALENDAR / EMAIL / SLACK / TACTICS, each with title + body + footer `// FILED UNDER: $OOO`. Hover ink-glow.
+## 2. Calendar — connect Google & Apple
 
-### 5. Inverse Calendar — make it actually work (`/calendar`)
-Replace static grid with a real interactive week:
-- 9–18h × Mon–Fri grid with seeded inverted week (mostly green free blocks, work as the corner)
-- Click any cell → toggle between `🟢 Free` / `⚫ Work` / `👻 Ghost Meeting`
-- Drag-select multiple cells (mousedown → mouseenter → mouseup) to bulk-mark blocks
-- Live counters in header: `Free hours: X · Work hours: Y · Inversion ratio: Z:1`
-- Template buttons that bulk-apply: `Strategic Free Afternoon`, `Ghost Friday`, `Sacred Lunch`, `Meeting I Cancelled in My Head`, `Reset week`
-- "Trigger events" rail under the grid: `11:00 COFFEE CRITICAL`, `13:00 Caloric Intake`, `16:59 SYSTEM OVERRIDE` — clicking one fires a fullscreen `EVACUATING` / `Snooze` modal
-- Persist edited week to `localStorage` (client-only, mounted in `useEffect` to avoid hydration mismatch)
+**Honest reality** (worth knowing before approving):
+- **Apple Calendar** has no public OAuth API. The only universal way to read it is via an **ICS subscription URL** (iCloud → Calendar → Share → Public Calendar → copy `webcal://…` link). Same for Outlook/Google "secret address" links.
+- **Google Calendar two-way edit** needs per-user OAuth, which requires Lovable Cloud + your own Google Cloud OAuth app (workspace connector only reads *your* calendar, not each visitor's).
 
-### 6. Tokenomics Terminal (new section on `/`)
-**MODULE 04** — terminal-style table: Ticker `$OOO` · Supply `1,000,000,000` · Network `Solana` · Launchpad `Pump.fun` · Tax `0/0` · Utility `Liberation`. CTA banner: `Mint Your Freedom.` → `BUY $OOO ON PUMP.FUN →`.
+**This pass ships the universal path that works today:**
+1. New `Connect Calendar` panel above the grid with two buttons: `Google Calendar` and `Apple Calendar`, each opening a modal with paste-friendly instructions + an ICS URL input.
+2. Pasted URL is saved to profile. We fetch it client-side, parse with `ical.js` (added via `bun add ical.js`), and overlay events onto the week grid as a fourth cell type: `booked` (read-only, neutral gray with a small lock icon, shows event title on hover).
+3. "Refresh" button + auto-refresh on mount (cached 10 min). CORS-safe ICS hosts (Google/iCloud public links) work directly from the browser; if a URL fails CORS we surface a clear error and a "we'll add server-side fetch when Cloud is enabled" note.
+4. UI also exposes a disabled `Connect with Google (full two-way sync)` button with a tooltip: "Requires Lovable Cloud + Google OAuth setup — coming soon." This makes the upgrade path obvious without faking it.
 
-### 7. Academy (`/academy`) — real library
-- Eyebrow `CURRICULUM 2026 · 100 LESSONS`, headline "The Academy of Doing Nothing."
-- Search input (filters by title/body/tag, case-insensitive)
-- Tag filter chips: `STEALTH`, `EMAIL`, `SLACK`, `CALENDAR`, `HYDRATION`, `TACTICS`, `NAP`, `BATHROOM`
-- Category badges per card: `HALF TRUE` / `HALF LIE` / `BOTH`
-- Expand to **~50 lessons** in `src/lib/academy.ts` (seeded library, room for 100). Mix of the existing rank-based lessons + new ones inspired by Costanza Protocol, 45-min coffee pilgrimage, Green Dot Theater, Reply-All Friday 4:58pm, etc.
-- Empty state copy from spec
-- Keep the Lich Points rank ladder as a visual sidebar
+**Edit-back** (writing OOO blocks to the real calendar) is **out of scope** this pass — requires Cloud + OAuth. Documented as the next step.
 
-### 8. Liberation finale
-Reword to `17:00 — SYSTEM OVERRIDE` with the auto-reply card (`Subject: Out Of Office (∞)` etc.). Final big text: `OUT OF OFFICE. FOREVER.`
+## 3. Reset week — preserve real bookings
 
-### 9. Footer
-- Email signature → `© $OOO · Auto-reply enabled indefinitely`
-- Disclaimer → `Not financial advice. Definitely lifestyle advice.`
-- Departments links unchanged.
+`Reset week` button currently calls `setCells(buildDefaultWeek())` which nukes everything. New behavior:
+- Only resets cells whose origin is `"ooo"` (user-created or template-applied OOO blocks).
+- Cells whose origin is `"external"` (from imported ICS) are untouched.
+- Add `origin: "ooo" | "external"` field to `CalendarCell`. External events are merged on top of the user week, never persisted into the editable layer.
+- Button label tightened to `Reset OOO blocks` with a small confirmation toast: "Your real bookings stay put."
 
-### 10. SEO meta — per-route
-Update `head()` for `/`, `/calendar`, `/missions`, `/academy`, `/ticker` with the titles/descriptions from the supplied copy block.
+## 4. Remove emojis → Lucide icons
+
+Audit + swap across the app. Each emoji gets a semantic Lucide icon styled with our tokens (text-necro / text-ink / text-violet):
+
+| Emoji | Replacement |
+|---|---|
+| 🟢 Free | `Sparkles` (necro) |
+| ⚫ Work | `Briefcase` (bone/60) |
+| 👻 Ghost | `Ghost` (violet) |
+| 🍝 Sacred Lunch | `UtensilsCrossed` |
+| 🚽 Paid Toilet | `Armchair` |
+| ☕ Coffee Pilgrimage | `Coffee` |
+| 🎯 Fake Focus | `Target` |
+| 🤧 Doctor's Note | `Stethoscope` |
+| ▶ / ■ in ROI | `Play` / `Square` |
+| ● status dots | `Circle` filled |
+
+Files touched: `InvertedCalendarPreview.tsx`, `calendar.tsx`, `MissionsPreview.tsx`, `missions.tsx`, `BathroomROI.tsx`, `Hero.tsx` badges, `Liberation.tsx`, `SurvivalTactics.tsx`, `TickerBand.tsx` (if any), `ooo.ts` data (drop emoji fields, add `icon: LucideIconName`).
+
+Ticker marquees keep their text-only punch (no emojis there today anyway).
+
+## 5. Academy — actually count points
+
+- Each lesson card gets a `Mark as learned` toggle (Lucide `CircleCheck` / `Circle`).
+- Clicking adds `lesson.xp` to `profile.xp` and pushes `lesson.n` into `completedLessons`. Unclick reverses it.
+- Top of `/academy` gains a sticky **XP HUD**: current XP, current rank, progress bar to next rank, "Lessons mastered: X / 50".
+- Rank ladder sidebar highlights the current rank (glow + `●`) and dims locked ones.
+- Filter chip `Learned` / `Unlearned` so users can find what's left.
+- Confetti-free, but a subtle violet flash + rank-up modal when crossing a threshold (e.g. 100 XP → Office Drone).
+- Hero CTA pill changes from `ENTER THE ACADEMY (100 LESSONS)` → `ENTER THE ACADEMY (X / 100 MASTERED)` reading from profile.
+- Footer/SiteNav can show current rank as a tiny chip next to the logo (optional, low-key).
+
+## 6. Out of scope (intentionally, this pass)
+
+- Real Google/Apple OAuth + writing events back to provider calendars (needs Cloud + your own Google Cloud project).
+- Multi-device sync of profile (needs Cloud auth).
+- Notifications/push for trigger events.
 
 ## Technical notes
 
-- Hydration fix: countdown in Hero + dashboard read `Date.now()` on render. Move all time-derived state into `useState(() => initial)` + `useEffect` that sets state on mount. Render placeholder `--:--:--` on first SSR pass.
-- Calendar state lives in a `useState<CalendarBlock[]>` hydrated from `localStorage` inside `useEffect` (never during render).
-- Drag-select: mouse handlers on the grid container, track `dragStart` + `hoverCell`, commit on `mouseup`.
-- New file: `src/lib/academy.ts` for the 50-lesson library.
-- New section files: `SurvivalTactics.tsx`, `BathroomROI.tsx`, `TokenomicsTerminal.tsx` (replaces `HalfTruths.tsx` + `PeaceDashboard.tsx`; old files removed).
-- All links/routes stay as-is — no new routes.
-- Brand untouched: keep purple/pearl/obsidian/necro green tokens. Keep Hero's blob, ink cursor, marquee, scroll progress.
-
-## Out of scope (for this pass)
-- Real Solana wallet / Pump.fun integration (CTAs are external links to `https://pump.fun`).
-- The full 100 Academy lessons (ship 50 well-written ones; system supports adding more).
-- Mobile-only animations beyond what already works.
+- New deps: `ical.js` for ICS parsing, `lucide-react` (already present).
+- `src/lib/profile.ts` exposes `getProfile()`, `setProfile(patch)`, `useProfile()`, `addXp(n)`, `toggleLesson(n)`, `addExternalCalendar(...)`. All `localStorage`-backed with a versioned key + safe JSON parse.
+- `src/lib/ical.ts` thin wrapper: `fetchIcs(url) → ExternalEvent[]` with 10-min in-memory cache and clear error types (`cors`, `parse`, `network`).
+- `CalendarCell` gains `origin: "ooo" | "external"` and optional `externalId`. External events render in a new `bg-bone/10` style with `Lock` icon, non-clickable, non-draggable.
+- Hydration discipline preserved (all profile/external reads happen inside `useEffect`).
+- No new routes besides `/profile`. No backend.

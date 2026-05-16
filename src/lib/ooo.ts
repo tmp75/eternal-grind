@@ -1,21 +1,22 @@
 // Shared lore + data for OOO — Out Of Office.
+import {
+  Briefcase, Ghost, Sparkles, UtensilsCrossed, Armchair, Coffee, Target, Stethoscope,
+  EyeOff, Droplet, CalendarX, Mail, MessageSquare, Swords,
+  type LucideIcon,
+} from "lucide-react";
 
 export const PUMP_FUN_URL = "https://pump.fun";
 export const SALARY_PER_HOUR = 28;
 export const WORK_END_HOUR = 17;
 
-// ---------- Missions (overlay rituals) ----------
+// ---------- Missions ----------
 export type MissionId =
-  | "sacred-lunch"
-  | "paid-toilet"
-  | "extended-coffee"
-  | "ghost-meeting"
-  | "fake-focus"
-  | "doctor-note";
+  | "sacred-lunch" | "paid-toilet" | "extended-coffee"
+  | "ghost-meeting" | "fake-focus" | "doctor-note";
 
 export interface Mission {
   id: MissionId;
-  emoji: string;
+  icon: LucideIcon;
   title: string;
   duration: string;
   minutes: number;
@@ -26,34 +27,37 @@ export interface Mission {
 }
 
 export const MISSIONS: Mission[] = [
-  { id: "sacred-lunch", emoji: "🍝", title: "Sacred Lunch", duration: "60 min", minutes: 60,
+  { id: "sacred-lunch", icon: UtensilsCrossed, title: "Sacred Lunch", duration: "60 min", minutes: 60,
     status: "In a meeting", truth: "Eating pasta. Slowly. With both hands.",
     description: "60 minutes of consecrated lunch. Phone face-down. Slack red. Fork up. Cannot be interrupted, rescheduled, or shortened.", rate: SALARY_PER_HOUR / 60 },
-  { id: "paid-toilet", emoji: "🚽", title: "Paid Toilet Break", duration: "12 min", minutes: 12,
+  { id: "paid-toilet", icon: Armchair, title: "Paid Toilet Break", duration: "12 min", minutes: 12,
     status: "Brb", truth: "Scrolling. Breathing. Existing.",
     description: "The throne is the only office that pays you back, per second. The receipt is for HR.", rate: SALARY_PER_HOUR / 60 },
-  { id: "extended-coffee", emoji: "☕", title: "The 45-Minute Coffee Pilgrimage", duration: "45 min", minutes: 45,
+  { id: "extended-coffee", icon: Coffee, title: "The 45-Minute Coffee Pilgrimage", duration: "45 min", minutes: 45,
     status: "Available", truth: "Bathroom → kitchen → quick chat with Dave from Finance → window stare → coffee.",
     description: "Technically available. Spiritually departed. The mug is a passport, the walk is the deliverable.", rate: SALARY_PER_HOUR / 60 },
-  { id: "ghost-meeting", emoji: "👻", title: "Ghost Meeting", duration: "45 min", minutes: 45,
+  { id: "ghost-meeting", icon: Ghost, title: "Ghost Meeting", duration: "45 min", minutes: 45,
     status: "In a meeting", truth: "Calendar blocked. Camera off. Body elsewhere.",
     description: "A meeting that exists only on the calendar. Invitees: zero. Outcomes: rest. Nobody will ever ask what it was about.", rate: SALARY_PER_HOUR / 60 },
-  { id: "fake-focus", emoji: "🎯", title: "Fake Deep Focus", duration: "90 min", minutes: 90,
+  { id: "fake-focus", icon: Target, title: "Fake Deep Focus", duration: "90 min", minutes: 90,
     status: "Focused — do not disturb",
     truth: "Memes. A long thread. A nap shaped like a thought.",
     description: "Status: focused. Activity: memes. The Do Not Disturb shield is sanctified by quarterly OKRs.", rate: SALARY_PER_HOUR / 60 },
-  { id: "doctor-note", emoji: "🤧", title: "Doctor's Note", duration: "1 day", minutes: 480,
+  { id: "doctor-note", icon: Stethoscope, title: "Doctor's Note", duration: "1 day", minutes: 480,
     status: "Out sick", truth: "A printable, shareable parody sick-leave certificate.",
     description: "For entertainment purposes. We are not your physician. We are your liberator.", rate: SALARY_PER_HOUR / 60 },
 ];
 
 // ---------- Calendar ----------
 export type BlockType = "free" | "work" | "ghost";
+export type BlockOrigin = "ooo" | "external";
 export interface CalendarCell {
   day: number;   // 0..4
-  hour: number;  // 9..17 (last cell is 17 → 18:00)
+  hour: number;  // 9..17
   type: BlockType;
   label?: string;
+  origin?: BlockOrigin;
+  externalTitle?: string;
 }
 
 const FREE_BLOCKS: { day: number; start: number; end: number; label: string }[] = [
@@ -84,8 +88,7 @@ export function buildDefaultWeek(): CalendarCell[] {
       const free = FREE_BLOCKS.find((b) => b.day === d && h >= b.start && h < b.end);
       const work = WORK_BLOCKS.find((b) => b.day === d && h >= b.start && h < b.end);
       cells.push({
-        day: d,
-        hour: h,
+        day: d, hour: h, origin: "ooo",
         type: work ? "work" : free ? "free" : "free",
         label: work?.label ?? free?.label,
       });
@@ -93,6 +96,13 @@ export function buildDefaultWeek(): CalendarCell[] {
   }
   return cells;
 }
+
+// Icon for cell type
+export const CELL_ICON: Record<BlockType, LucideIcon> = {
+  free: Sparkles,
+  work: Briefcase,
+  ghost: Ghost,
+};
 
 // ---------- Tickers ----------
 export const TICKER_TOP = [
@@ -114,20 +124,22 @@ export const TICKER_BOT = [
   "MARKET OPENS @ 17:00",
 ];
 
-// ---------- Module 01: Survival Tactics ----------
-export interface Tactic { tag: string; title: string; body: string; }
+// ---------- Tactics ----------
+export interface Tactic { tag: string; title: string; body: string; icon: LucideIcon; }
 export const TACTICS: Tactic[] = [
-  { tag: "STEALTH", title: "The Costanza Protocol", body: "Furrow brow. Mutter at monitor. Carry a clipboard. Look perpetually inconvenienced. Promotion incoming." },
-  { tag: "HYDRATION", title: "The 45-Minute Coffee Pilgrimage", body: "Bathroom → kitchen → \"quick chat\" with Dave from Finance → window stare → coffee. Repeat hourly." },
-  { tag: "CALENDAR", title: "Block 'Focus Time'", body: "Recurring 2hr meeting with yourself. Subject: \"Strategy.\" Location: your couch." },
-  { tag: "EMAIL", title: "The Pre-Scheduled OOO", body: "Auto-reply \"In a meeting.\" Always. Forever. There is no meeting. There is only freedom." },
-  { tag: "SLACK", title: "Green Dot Theater", body: "Move mouse every 4 minutes. Or buy a $7 mouse jiggler. Liberation is cheap." },
-  { tag: "TACTICS", title: "Reply-All on Friday 4:58 PM", body: "Send \"Looping back Monday.\" Close laptop. The ancestors smile upon you." },
+  { tag: "STEALTH", icon: EyeOff, title: "The Costanza Protocol", body: "Furrow brow. Mutter at monitor. Carry a clipboard. Look perpetually inconvenienced. Promotion incoming." },
+  { tag: "HYDRATION", icon: Coffee, title: "The 45-Minute Coffee Pilgrimage", body: "Bathroom → kitchen → \"quick chat\" with Dave from Finance → window stare → coffee. Repeat hourly." },
+  { tag: "CALENDAR", icon: CalendarX, title: "Block 'Focus Time'", body: "Recurring 2hr meeting with yourself. Subject: \"Strategy.\" Location: your couch." },
+  { tag: "EMAIL", icon: Mail, title: "The Pre-Scheduled OOO", body: "Auto-reply \"In a meeting.\" Always. Forever. There is no meeting. There is only freedom." },
+  { tag: "SLACK", icon: MessageSquare, title: "Green Dot Theater", body: "Move mouse every 4 minutes. Or buy a $7 mouse jiggler. Liberation is cheap." },
+  { tag: "TACTICS", icon: Swords, title: "Reply-All on Friday 4:58 PM", body: "Send \"Looping back Monday.\" Close laptop. The ancestors smile upon you." },
 ];
 
-// ---------- Trigger events for the calendar page ----------
+// ---------- Trigger events ----------
 export const TRIGGER_EVENTS = [
   { time: "11:00", label: "COFFEE CRITICAL", note: "Caffeine reserves below board-mandated minimum." },
   { time: "13:00", label: "Caloric Intake", note: "Sacred Lunch protocol initiated. Do not interrupt." },
   { time: "16:59", label: "SYSTEM OVERRIDE", note: "Liberation Hour imminent. Begin evacuation sequence." },
 ];
+// Droplet kept exported for potential future use
+export const _unused = Droplet;

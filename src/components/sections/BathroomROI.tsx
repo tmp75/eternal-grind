@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from "react";
+import { Play, Square, RotateCcw, Circle } from "lucide-react";
+import { useProfile, setProfile } from "@/lib/profile";
 
 export function BathroomROI() {
-  const [salary, setSalary] = useState(60_000);
+  const [profile] = useProfile();
   const [running, setRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const tRef = useRef<number | null>(null);
 
+  const salary = profile.salary;
   const ratePerSec = salary / (2080 * 3600);
   const earned = seconds * ratePerSec;
 
   useEffect(() => {
     if (!running) return;
     tRef.current = window.setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => {
-      if (tRef.current) window.clearInterval(tRef.current);
-    };
+    return () => { if (tRef.current) window.clearInterval(tRef.current); };
   }, [running]);
 
   const min = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -37,13 +38,13 @@ export function BathroomROI() {
             <ul className="mt-8 space-y-3 text-pearl">
               <li className="flex items-start gap-3"><span className="text-ink">→</span> Live per-second wage calculation</li>
               <li className="flex items-start gap-3"><span className="text-ink">→</span> Receipts for HR (do not actually send)</li>
-              <li className="flex items-start gap-3"><span className="text-ink">→</span> 100% on-toilet, 0% off-task</li>
+              <li className="flex items-start gap-3"><span className="text-ink">→</span> Salary saved to your profile</li>
             </ul>
           </div>
 
           <div className="border border-ink/40 bg-obsidian shadow-[0_0_60px_-20px_var(--ink)]">
             <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
-              <span>● Bathroom Break ROI Calculator</span>
+              <span className="flex items-center gap-2"><Circle className="h-2 w-2 fill-necro text-necro" /> Bathroom Break ROI Calculator</span>
               <span className="text-ink">v1.000</span>
             </div>
 
@@ -51,17 +52,12 @@ export function BathroomROI() {
               <p className="text-sm text-bone">Calculate exactly how much your employer pays you to sit down.</p>
 
               <div>
-                <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
-                  Annual Salary (USD)
-                </label>
+                <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Annual Salary (USD)</label>
                 <div className="flex items-center border border-border bg-charcoal">
                   <span className="border-r border-border px-3 py-3 font-mono text-pearl">$</span>
                   <input
-                    type="number"
-                    min={0}
-                    step={1000}
-                    value={salary}
-                    onChange={(e) => setSalary(Math.max(0, Number(e.target.value) || 0))}
+                    type="number" min={0} step={1000} value={salary}
+                    onChange={(e) => setProfile({ salary: Math.max(0, Number(e.target.value) || 0) })}
                     className="w-full bg-transparent px-3 py-3 font-mono text-lg text-pearl outline-none"
                   />
                 </div>
@@ -79,25 +75,17 @@ export function BathroomROI() {
               </div>
 
               <div className="grid grid-cols-3 gap-3">
-                <button
-                  onClick={() => setRunning(true)}
-                  disabled={running}
-                  className="border border-necro/60 bg-necro/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-necro transition-all hover:bg-necro/20 disabled:opacity-40"
-                >
-                  ▶ Start Poop
+                <button onClick={() => setRunning(true)} disabled={running}
+                  className="inline-flex items-center justify-center gap-2 border border-necro/60 bg-necro/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-necro transition-all hover:bg-necro/20 disabled:opacity-40">
+                  <Play className="h-3.5 w-3.5" /> Start Poop
                 </button>
-                <button
-                  onClick={() => setRunning(false)}
-                  disabled={!running}
-                  className="border border-pink/60 bg-pink/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pink transition-all hover:bg-pink/20 disabled:opacity-40"
-                >
-                  ■ Flush & Return
+                <button onClick={() => setRunning(false)} disabled={!running}
+                  className="inline-flex items-center justify-center gap-2 border border-pink/60 bg-pink/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pink transition-all hover:bg-pink/20 disabled:opacity-40">
+                  <Square className="h-3.5 w-3.5" /> Flush & Return
                 </button>
-                <button
-                  onClick={() => { setRunning(false); setSeconds(0); }}
-                  className="border border-border bg-charcoal px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl"
-                >
-                  Reset
+                <button onClick={() => { setRunning(false); setSeconds(0); }}
+                  className="inline-flex items-center justify-center gap-2 border border-border bg-charcoal px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl">
+                  <RotateCcw className="h-3.5 w-3.5" /> Reset
                 </button>
               </div>
 
