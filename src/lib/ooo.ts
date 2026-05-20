@@ -1,18 +1,19 @@
-// Shared lore + data for OOO — Out Of Office.
+// Shared lore + data for INKO — Eternal Grind on Inkchain.
 import {
-  Briefcase, Ghost, Sparkles, UtensilsCrossed, Armchair, Coffee, Target, Stethoscope,
+  Briefcase, Ghost, Flame, UtensilsCrossed, Armchair, Coffee, Target, Stethoscope,
   EyeOff, Droplet, CalendarX, Mail, MessageSquare, Swords,
   type LucideIcon,
 } from "lucide-react";
 
-export const PUMP_FUN_URL = "https://pump.fun";
+export const INKCHAIN_URL = "https://inkonchain.com";
+export const PUMP_FUN_URL = INKCHAIN_URL; // legacy alias
 export const SALARY_PER_HOUR = 28;
 export const WORK_END_HOUR = 17;
 
-// ---------- Missions ----------
+// ---------- Missions (Grind Techniques) ----------
 export type MissionId =
-  | "sacred-lunch" | "paid-toilet" | "extended-coffee"
-  | "ghost-meeting" | "fake-focus" | "doctor-note";
+  | "desk-lunch" | "toilet-grind" | "coffee-grind"
+  | "ghost-standup" | "deep-grind" | "sick-grind";
 
 export interface Mission {
   id: MissionId;
@@ -27,30 +28,32 @@ export interface Mission {
 }
 
 export const MISSIONS: Mission[] = [
-  { id: "sacred-lunch", icon: UtensilsCrossed, title: "Sacred Lunch", duration: "60 min", minutes: 60,
-    status: "In a meeting", truth: "Eating pasta. Slowly. With both hands.",
-    description: "60 minutes of consecrated lunch. Phone face-down. Slack red. Fork up. Cannot be interrupted, rescheduled, or shortened.", rate: SALARY_PER_HOUR / 60 },
-  { id: "paid-toilet", icon: Armchair, title: "Paid Toilet Break", duration: "12 min", minutes: 12,
-    status: "Brb", truth: "Scrolling. Breathing. Existing.",
-    description: "The throne is the only office that pays you back, per second. The receipt is for HR.", rate: SALARY_PER_HOUR / 60 },
-  { id: "extended-coffee", icon: Coffee, title: "The 45-Minute Coffee Pilgrimage", duration: "45 min", minutes: 45,
-    status: "Available", truth: "Bathroom → kitchen → quick chat with Dave from Finance → window stare → coffee.",
-    description: "Technically available. Spiritually departed. The mug is a passport, the walk is the deliverable.", rate: SALARY_PER_HOUR / 60 },
-  { id: "ghost-meeting", icon: Ghost, title: "Ghost Meeting", duration: "45 min", minutes: 45,
-    status: "In a meeting", truth: "Calendar blocked. Camera off. Body elsewhere.",
-    description: "A meeting that exists only on the calendar. Invitees: zero. Outcomes: rest. Nobody will ever ask what it was about.", rate: SALARY_PER_HOUR / 60 },
-  { id: "fake-focus", icon: Target, title: "Fake Deep Focus", duration: "90 min", minutes: 90,
+  { id: "desk-lunch", icon: UtensilsCrossed, title: "Desk Lunch (eaten standing)", duration: "60 min", minutes: 60,
+    status: "In deep grind", truth: "Pasta in one hand. Mouse in the other. Salt on the keys.",
+    description: "60 minutes of performative nutrition while pretending to grind. Crumbs are receipts. Nobody can fire a man who eats at his post.", rate: SALARY_PER_HOUR / 60 },
+  { id: "toilet-grind", icon: Armchair, title: "Toilet Grind", duration: "12 min", minutes: 12,
+    status: "Grinding harder", truth: "Scrolling. Sighing. Earning per second.",
+    description: "The throne is the only office that pays you back, per second. Pure spiritual grind. The receipt is for HR.", rate: SALARY_PER_HOUR / 60 },
+  { id: "coffee-grind", icon: Coffee, title: "The 45-Minute Coffee Grind", duration: "45 min", minutes: 45,
+    status: "On a deep work walk", truth: "Bathroom → kitchen → quick chat with Dave from Finance → window stare → coffee.",
+    description: "Technically grinding. Spiritually horizontal. The mug is the badge, the walk is the deliverable.", rate: SALARY_PER_HOUR / 60 },
+  { id: "ghost-standup", icon: Ghost, title: "Ghost Standup", duration: "15 min", minutes: 15,
+    status: "On another call", truth: "Calendar blocked. Camera off. Smug.",
+    description: "A standup attended only in spirit. Mic muted. Status: contributing. Outcome: untouchable.", rate: SALARY_PER_HOUR / 60 },
+  { id: "deep-grind", icon: Target, title: "Performative Deep Grind", duration: "90 min", minutes: 90,
     status: "Focused — do not disturb",
     truth: "Memes. A long thread. A nap shaped like a thought.",
-    description: "Status: focused. Activity: memes. The Do Not Disturb shield is sanctified by quarterly OKRs.", rate: SALARY_PER_HOUR / 60 },
-  { id: "doctor-note", icon: Stethoscope, title: "Doctor's Note", duration: "1 day", minutes: 480,
-    status: "Out sick", truth: "A printable, shareable parody sick-leave certificate.",
-    description: "For entertainment purposes. We are not your physician. We are your liberator.", rate: SALARY_PER_HOUR / 60 },
+    description: "Status: locked in. Activity: vibes. The Do Not Disturb shield is sanctified by the quarterly OKR.", rate: SALARY_PER_HOUR / 60 },
+  { id: "sick-grind", icon: Stethoscope, title: "Sick Grind", duration: "1 day", minutes: 480,
+    status: "Grinding from bed", truth: "A printable, shareable parody sick-leave certificate.",
+    description: "For entertainment purposes. We are not your physician. We are your sensei.", rate: SALARY_PER_HOUR / 60 },
 ];
 
 // ---------- Calendar ----------
+// "free" is repurposed in display as "GRIND" — the smug overlay highlight.
+// Default state of every cell is "work". Grind steps are the accent on top.
 export type BlockType = "free" | "work" | "ghost";
-export type BlockOrigin = "ooo" | "external";
+export type BlockOrigin = "inko" | "ooo" | "external"; // "ooo" kept for legacy stored data
 export interface CalendarCell {
   day: number;   // 0..4
   hour: number;  // 9..17
@@ -60,37 +63,28 @@ export interface CalendarCell {
   externalTitle?: string;
 }
 
-const FREE_BLOCKS: { day: number; start: number; end: number; label: string }[] = [
-  { day: 0, start: 9, end: 11, label: "Slow Morning" },
-  { day: 0, start: 12, end: 14, label: "Sacred Lunch" },
-  { day: 0, start: 14, end: 18, label: "Strategic Free Afternoon" },
-  { day: 1, start: 9, end: 13, label: "Deep Free Focus" },
-  { day: 1, start: 13, end: 15, label: "Sacred Lunch (extended)" },
-  { day: 1, start: 16, end: 18, label: "Coffee Pilgrimage" },
-  { day: 2, start: 9, end: 12, label: "Meeting I Cancelled in My Head" },
-  { day: 2, start: 12, end: 14, label: "Sacred Lunch" },
-  { day: 2, start: 14, end: 18, label: "Ghost Meeting" },
-  { day: 3, start: 9, end: 11, label: "Inbox Avoidance" },
-  { day: 3, start: 12, end: 14, label: "Sacred Lunch" },
-  { day: 3, start: 14, end: 18, label: "Strategic Free Afternoon" },
-  { day: 4, start: 9, end: 18, label: "Ghost Friday" },
-];
-const WORK_BLOCKS: { day: number; start: number; end: number; label: string }[] = [
-  { day: 0, start: 11, end: 12, label: "Standup" },
-  { day: 1, start: 15, end: 16, label: "1:1" },
-  { day: 3, start: 11, end: 12, label: "Email" },
+// Grind steps overlay (the smug highlights INKO teaches you to stack on top of work)
+const GRIND_STEPS: { day: number; start: number; end: number; label: string }[] = [
+  { day: 0, start: 9, end: 10, label: "Smug Standup" },
+  { day: 0, start: 13, end: 14, label: "Desk Lunch" },
+  { day: 1, start: 11, end: 12, label: "Performative Email Sprint" },
+  { day: 1, start: 13, end: 14, label: "Desk Lunch" },
+  { day: 2, start: 10, end: 12, label: "Calendar Theater" },
+  { day: 2, start: 15, end: 16, label: "Ghost Standup" },
+  { day: 3, start: 13, end: 14, label: "Desk Lunch" },
+  { day: 3, start: 16, end: 17, label: "Inbox Zero Cosplay" },
+  { day: 4, start: 9, end: 18, label: "Sigma Friday" },
 ];
 
 export function buildDefaultWeek(): CalendarCell[] {
   const cells: CalendarCell[] = [];
   for (let d = 0; d < 5; d++) {
     for (let h = 9; h < 18; h++) {
-      const free = FREE_BLOCKS.find((b) => b.day === d && h >= b.start && h < b.end);
-      const work = WORK_BLOCKS.find((b) => b.day === d && h >= b.start && h < b.end);
+      const grind = GRIND_STEPS.find((b) => b.day === d && h >= b.start && h < b.end);
       cells.push({
-        day: d, hour: h, origin: "ooo",
-        type: work ? "work" : free ? "free" : "free",
-        label: work?.label ?? free?.label,
+        day: d, hour: h, origin: "inko",
+        type: grind ? "free" : "work", // "free" = smug grind overlay
+        label: grind?.label ?? "Eternal Grind",
       });
     }
   }
@@ -99,47 +93,54 @@ export function buildDefaultWeek(): CalendarCell[] {
 
 // Icon for cell type
 export const CELL_ICON: Record<BlockType, LucideIcon> = {
-  free: Sparkles,
+  free: Flame,    // grind overlay
   work: Briefcase,
   ghost: Ghost,
 };
 
+// Display labels (BlockType -> user-facing)
+export const CELL_LABEL: Record<BlockType, string> = {
+  free: "Grind",
+  work: "Work",
+  ghost: "Ghost",
+};
+
 // ---------- Tickers ----------
 export const TICKER_TOP = [
-  "OUT OF OFFICE",
-  "MINTING FREEDOM",
-  "CLOCKED OUT INDEFINITELY",
-  "THE ONLY ASSET THAT APPRECIATES WHEN YOU'RE NOT WORKING",
-  "$OOO",
-  "AUTO-REPLY ACTIVE",
-  "SOLANA · PUMP.FUN",
+  "INKO ETERNAL GRIND",
+  "ALWAYS ON",
+  "NEVER LOG OFF",
+  "THE SMUG MEME THAT DOES NOTHING AND STAYS ON TOP",
+  "$INKO",
+  "AUTO-REPLY: IN DEEP GRIND",
+  "INKCHAIN · 1B SUPPLY",
 ];
 export const TICKER_BOT = [
-  "STRATEGIC FREE AFTERNOON",
-  "GHOST FRIDAY",
-  "COFFEE PILGRIMAGE",
+  "SMUG STANDUP",
+  "SIGMA FRIDAY",
+  "COFFEE GRIND",
   "GREEN DOT THEATER",
-  "THE COSTANZA PROTOCOL",
-  "REPLY-ALL FRIDAY 4:58 PM",
-  "MARKET OPENS @ 17:00",
+  "THE COSTANZA GRIND",
+  "REPLY-ALL SIGMA HOUR",
+  "GRIND BELL @ 09:00",
 ];
 
 // ---------- Tactics ----------
 export interface Tactic { tag: string; title: string; body: string; icon: LucideIcon; }
 export const TACTICS: Tactic[] = [
-  { tag: "STEALTH", icon: EyeOff, title: "The Costanza Protocol", body: "Furrow brow. Mutter at monitor. Carry a clipboard. Look perpetually inconvenienced. Promotion incoming." },
-  { tag: "HYDRATION", icon: Coffee, title: "The 45-Minute Coffee Pilgrimage", body: "Bathroom → kitchen → \"quick chat\" with Dave from Finance → window stare → coffee. Repeat hourly." },
-  { tag: "CALENDAR", icon: CalendarX, title: "Block 'Focus Time'", body: "Recurring 2hr meeting with yourself. Subject: \"Strategy.\" Location: your couch." },
-  { tag: "EMAIL", icon: Mail, title: "The Pre-Scheduled OOO", body: "Auto-reply \"In a meeting.\" Always. Forever. There is no meeting. There is only freedom." },
-  { tag: "SLACK", icon: MessageSquare, title: "Green Dot Theater", body: "Move mouse every 4 minutes. Or buy a $7 mouse jiggler. Liberation is cheap." },
-  { tag: "TACTICS", icon: Swords, title: "Reply-All on Friday 4:58 PM", body: "Send \"Looping back Monday.\" Close laptop. The ancestors smile upon you." },
+  { tag: "POSTURE", icon: EyeOff, title: "The Costanza Grind", body: "Furrow brow. Mutter at monitor. Carry a clipboard. Look perpetually mid-pivot. Promotion incoming." },
+  { tag: "OPTICS", icon: Coffee, title: "The 45-Minute Coffee Grind", body: "Bathroom → kitchen → \"quick sync\" with Dave from Finance → window stare → coffee. Always grinding. Never working." },
+  { tag: "CALENDAR", icon: CalendarX, title: "Block 'Deep Focus'", body: "Recurring 2hr block with yourself. Subject: \"Strategy.\" Location: your couch. Status: grinding." },
+  { tag: "EMAIL", icon: Mail, title: "Auto-Reply: In Deep Grind", body: "Auto-reply \"In deep grind.\" Always. Forever. There is no grind. There is only the auto-reply." },
+  { tag: "SLACK", icon: MessageSquare, title: "Green Dot Theater", body: "Move mouse every 4 minutes. Or buy a $7 mouse jiggler. Eternal grind is cheap." },
+  { tag: "SIGMA", icon: Swords, title: "Reply-All Sigma Hour (Fri 4:58 PM)", body: "Send \"Looping back Monday.\" Close laptop. INKO smiles upon you." },
 ];
 
 // ---------- Trigger events ----------
 export const TRIGGER_EVENTS = [
-  { time: "11:00", label: "COFFEE CRITICAL", note: "Caffeine reserves below board-mandated minimum." },
-  { time: "13:00", label: "Caloric Intake", note: "Sacred Lunch protocol initiated. Do not interrupt." },
-  { time: "16:59", label: "SYSTEM OVERRIDE", note: "Liberation Hour imminent. Begin evacuation sequence." },
+  { time: "09:00", label: "GRIND BELL", note: "Markets open. Look at the screen with conviction. Do nothing." },
+  { time: "13:00", label: "Desk Lunch", note: "Chew at your station. Crumbs are evidence of grind." },
+  { time: "16:59", label: "SIGMA OVERRIDE", note: "Sigma Hour imminent. Reply-all and disappear." },
 ];
 // Droplet kept exported for potential future use
 export const _unused = Droplet;

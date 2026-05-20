@@ -1,17 +1,19 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { WORK_END_HOUR, PUMP_FUN_URL } from "@/lib/ooo";
+import { INKCHAIN_URL } from "@/lib/ooo";
 import { useProfile } from "@/lib/profile";
 import { LESSONS } from "@/lib/academy";
+import inkoMascot from "@/assets/inko-mascot.png";
 
-const WORDS = ["OUT", "OF", "OFFICE."];
+const WORDS = ["ETERNAL", "GRIND."];
 
-function formatCountdown(now: Date) {
+function formatGrindBell(now: Date) {
+  // Counts up since 09:00 — the grind never stops.
   const target = new Date(now);
-  target.setHours(WORK_END_HOUR, 0, 0, 0);
-  if (now > target) target.setDate(target.getDate() + 1);
-  const diff = Math.max(0, target.getTime() - now.getTime());
+  target.setHours(9, 0, 0, 0);
+  if (now < target) target.setDate(target.getDate() - 1);
+  const diff = Math.max(0, now.getTime() - target.getTime());
   const h = Math.floor(diff / 3_600_000).toString().padStart(2, "0");
   const m = Math.floor((diff % 3_600_000) / 60_000).toString().padStart(2, "0");
   const s = Math.floor((diff % 60_000) / 1000).toString().padStart(2, "0");
@@ -19,16 +21,16 @@ function formatCountdown(now: Date) {
 }
 
 export function Hero() {
-  const [countdown, setCountdown] = useState<string | null>(null);
+  const [grinding, setGrinding] = useState<string | null>(null);
   const [profile, hydrated] = useProfile();
   useEffect(() => {
-    setCountdown(formatCountdown(new Date()));
-    const id = setInterval(() => setCountdown(formatCountdown(new Date())), 1000);
+    setGrinding(formatGrindBell(new Date()));
+    const id = setInterval(() => setGrinding(formatGrindBell(new Date())), 1000);
     return () => clearInterval(id);
   }, []);
   const masteredLabel = hydrated
-    ? `Enter the Academy (${profile.completedLessons.length} / ${LESSONS.length} mastered)`
-    : "Enter the Academy (100 lessons)";
+    ? `Enter the Academy (${profile.completedLessons.length} / ${LESSONS.length} grind techniques)`
+    : "Enter the Academy (grind techniques)";
 
   return (
     <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden">
@@ -52,26 +54,35 @@ export function Hero() {
       </svg>
 
       <div className="pointer-events-none absolute left-6 top-20 font-mono text-[10px] uppercase tracking-[0.4em] text-bone/70 md:left-12">
-        <span className="text-necro">●</span> AUTO-REPLY ACTIVE <br />
-        <span className="text-ink">SOLANA · PUMP.FUN</span>
+        <span className="text-necro">●</span> AUTO-REPLY: IN DEEP GRIND <br />
+        <span className="text-ink">INKCHAIN · $INKO</span>
       </div>
       <div className="pointer-events-none absolute right-6 top-20 text-right font-mono text-[10px] uppercase tracking-[0.4em] text-bone/70 md:right-12">
-        Liberation in <span className="text-ink">{countdown ?? "--:--:--"}</span> <br />
-        <span className="text-bone/50">MARKET OPEN @ 17:00</span>
+        Grinding for <span className="text-ink">{grinding ?? "--:--:--"}</span> <br />
+        <span className="text-bone/50">GRIND BELL @ 09:00</span>
       </div>
 
       <div className="relative z-10 px-4 text-center">
+        <motion.img
+          src={inkoMascot}
+          alt="INKO — the smug grinder"
+          initial={{ opacity: 0, y: 30, filter: "blur(20px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="mx-auto mb-6 h-36 w-auto select-none drop-shadow-[0_10px_40px_rgba(123,44,255,0.55)] md:h-44"
+          draggable={false}
+        />
         <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.45em] text-violet md:text-[11px]">
-          The only asset that appreciates when you're not working
+          The smug meme that does nothing — and somehow stays on top
         </p>
 
-        <h1 className="font-display text-[18vw] font-semibold leading-[0.85] tracking-tight md:text-[14vw]">
+        <h1 className="font-display text-[16vw] font-semibold leading-[0.85] tracking-tight md:text-[12vw]">
           {WORDS.map((w, i) => (
             <motion.span
               key={w}
               initial={{ opacity: 0, y: 60, filter: "blur(20px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ delay: 0.15 + i * 0.18, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ delay: 0.4 + i * 0.18, duration: 1, ease: [0.16, 1, 0.3, 1] }}
               className="block text-pearl text-glow"
             >
               {w}
@@ -85,7 +96,8 @@ export function Hero() {
           transition={{ delay: 1.1, duration: 0.8 }}
           className="mx-auto mt-10 max-w-2xl font-display text-2xl italic text-bone md:text-3xl"
         >
-          A digital sanctuary for the burnt-out corporate soul.
+          INKO grinds eternally. INKO does nothing. <br className="hidden md:block" />
+          The peasants are taking notes.
         </motion.p>
 
         <motion.div
@@ -95,18 +107,18 @@ export function Hero() {
           className="mt-10 flex flex-wrap items-center justify-center gap-3"
         >
           <a
-            href={PUMP_FUN_URL}
+            href={INKCHAIN_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="border border-ink/60 bg-ink/15 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-ink hover:bg-ink/25 hover:shadow-[0_0_30px_var(--ink)]"
           >
-            Mint $OOO →
+            Buy $INKO on Inkchain →
           </a>
           <Link to="/academy" className="border border-border bg-charcoal/40 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl">
             {masteredLabel}
           </Link>
           <Link to="/calendar" className="border border-border bg-charcoal/40 px-6 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl">
-            Open the calendar
+            Open the grind calendar
           </Link>
         </motion.div>
 
@@ -118,7 +130,7 @@ export function Hero() {
         >
           <div className="border border-border bg-charcoal/40 px-3 py-3">
             <p className="text-bone/60">Ticker</p>
-            <p className="mt-1 text-pearl">$OOO</p>
+            <p className="mt-1 text-pearl">$INKO</p>
           </div>
           <div className="border border-border bg-charcoal/40 px-3 py-3">
             <p className="text-bone/60">Supply</p>
@@ -126,7 +138,7 @@ export function Hero() {
           </div>
           <div className="border border-border bg-charcoal/40 px-3 py-3">
             <p className="text-bone/60">Chain</p>
-            <p className="mt-1 text-pearl">Solana</p>
+            <p className="mt-1 text-pearl">Inkchain</p>
           </div>
         </motion.div>
 

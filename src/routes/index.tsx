@@ -11,10 +11,10 @@ import { Liberation } from "@/components/sections/Liberation";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "$OOO — Out Of Office | The Anti-Work Meme on Solana" },
-      { name: "description", content: "A digital sanctuary for the burnt-out corporate soul. $OOO on Solana via Pump.fun. The only asset that appreciates when you're not working." },
-      { property: "og:title", content: "$OOO — Out Of Office" },
-      { property: "og:description", content: "Mint your freedom. The only asset that appreciates when you're not working." },
+      { title: "$INKO — Eternal Grind | The Smug Meme on Inkchain" },
+      { name: "description", content: "INKO does nothing and stays on top. $INKO on Inkchain, 1B supply. The smug grinder teaching peasants the sacred art of doing nothing while looking unstoppable." },
+      { property: "og:title", content: "$INKO — Eternal Grind" },
+      { property: "og:description", content: "The smug meme that does nothing and somehow stays on top. $INKO on Inkchain." },
       { property: "og:type", content: "website" },
     ],
   }),

@@ -7,10 +7,10 @@ import { MISSIONS, type Mission } from "@/lib/ooo";
 export const Route = createFileRoute("/missions")({
   head: () => ({
     meta: [
-      { title: "Sacred Missions — OOO" },
-      { name: "description", content: "Six full-screen rituals against the desk: Sacred Lunch, Paid Toilet Break, Extended Coffee, Ghost Meeting, Fake Deep Focus, Doctor's Note. €€ tracked live." },
-      { property: "og:title", content: "Sacred Missions — OOO" },
-      { property: "og:description", content: "Full-screen overlays. Live € tracker. Cannot be interrupted." },
+      { title: "Grind Techniques — $INKO" },
+      { name: "description", content: "Six full-screen grind rituals: Desk Lunch, Toilet Grind, Coffee Grind, Ghost Standup, Performative Deep Grind, Sick Grind. Live grind earnings tracked." },
+      { property: "og:title", content: "Grind Techniques — $INKO" },
+      { property: "og:description", content: "Full-screen overlays. Live grind tracker. Cannot be interrupted." },
     ],
   }),
   component: MissionsPage,
@@ -22,7 +22,7 @@ function MissionOverlay({ mission, onClose }: { mission: Mission; onClose: () =>
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, []);
-  const eur = (seconds / 60) * mission.rate;
+  const usd = (seconds / 60) * mission.rate;
   const min = Math.floor(seconds / 60).toString().padStart(2, "0");
   const sec = (seconds % 60).toString().padStart(2, "0");
   const Icon = mission.icon;
@@ -39,19 +39,19 @@ function MissionOverlay({ mission, onClose }: { mission: Mission; onClose: () =>
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full max-w-3xl border border-ink bg-charcoal p-10 text-center shadow-[0_30px_120px_-20px_var(--ink)]"
       >
-        <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-violet">● Mission active · cannot be interrupted</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-violet">● Grind active · cannot be interrupted</p>
         <div className="mt-6 flex justify-center"><Icon className="h-20 w-20 text-ink" strokeWidth={1.25} /></div>
         <h2 className="mt-4 font-display text-5xl text-pearl text-glow md:text-6xl">{mission.title}</h2>
         <p className="mt-3 font-display text-xl italic text-bone">{mission.truth}</p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           <div className="border border-border bg-obsidian p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Elapsed</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Grinding for</p>
             <p className="mt-2 font-mono text-5xl text-pearl">{min}:{sec}</p>
           </div>
           <div className="border border-ink/40 bg-obsidian p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">€€ Acquired</p>
-            <p className="mt-2 font-display text-5xl text-necro">€{eur.toFixed(2)}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">$ Acquired</p>
+            <p className="mt-2 font-display text-5xl text-necro">${usd.toFixed(2)}</p>
           </div>
         </div>
 
@@ -63,7 +63,7 @@ function MissionOverlay({ mission, onClose }: { mission: Mission; onClose: () =>
           onClick={onClose}
           className="mt-10 inline-flex items-center gap-2 border border-border px-6 py-3 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl hover:border-ink hover:text-ink"
         >
-          End mission <X className="h-4 w-4" />
+          End grind <X className="h-4 w-4" />
         </button>
       </motion.div>
     </motion.div>
@@ -77,12 +77,12 @@ function MissionsPage() {
     <main className="pt-24">
       <section className="border-b border-border py-24 md:py-32">
         <div className="mx-auto max-w-[1300px] px-6 md:px-12">
-          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">— Six rituals —</p>
+          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">— Six grind rituals —</p>
           <h1 className="font-display text-6xl leading-[0.95] tracking-tight text-pearl md:text-8xl text-glow">
-            Sacred<br /><em>Missions.</em>
+            Grind<br /><em>Techniques.</em>
           </h1>
           <p className="mt-8 max-w-2xl font-display text-xl italic text-bone md:text-2xl">
-            Full-screen overlays. Live € tracker. Each ritual is a sealed contract between you and the void.
+            Full-screen overlays. Live $ tracker. Each ritual is a sealed grind contract between you and INKO.
           </p>
         </div>
       </section>
@@ -105,7 +105,7 @@ function MissionsPage() {
                 </div>
                 <p className="mt-4 font-display text-2xl text-pearl">{m.title}</p>
                 <p className="mt-2 text-sm text-bone">{m.description}</p>
-                <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-necro">▶ Begin ritual</p>
+                <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-necro">▶ Begin grind</p>
               </motion.button>
             );
           })}

@@ -29,14 +29,14 @@ export function BathroomROI() {
           <div>
             <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Module 02 / Tool</p>
             <h2 className="font-display text-5xl leading-[1.02] tracking-tight text-pearl md:text-6xl">
-              Quantify Your Liberation.
+              Toilet Grind ROI.
             </h2>
             <p className="mt-6 max-w-md text-bone">
-              Every second on the porcelain throne is a second your employer is paying for your freedom.
-              Run the numbers. Feel the power.
+              Every second on the throne is grind. Spiritual grind. Paid grind.
+              INKO does this 14 hours a day. Quantify yours.
             </p>
             <ul className="mt-8 space-y-3 text-pearl">
-              <li className="flex items-start gap-3"><span className="text-ink">→</span> Live per-second wage calculation</li>
+              <li className="flex items-start gap-3"><span className="text-ink">→</span> Live per-second grind earnings</li>
               <li className="flex items-start gap-3"><span className="text-ink">→</span> Receipts for HR (do not actually send)</li>
               <li className="flex items-start gap-3"><span className="text-ink">→</span> Salary saved to your profile</li>
             </ul>
@@ -44,12 +44,12 @@ export function BathroomROI() {
 
           <div className="border border-ink/40 bg-obsidian shadow-[0_0_60px_-20px_var(--ink)]">
             <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
-              <span className="flex items-center gap-2"><Circle className="h-2 w-2 fill-necro text-necro" /> Bathroom Break ROI Calculator</span>
+              <span className="flex items-center gap-2"><Circle className="h-2 w-2 fill-necro text-necro" /> Toilet Grind ROI Calculator</span>
               <span className="text-ink">v1.000</span>
             </div>
 
             <div className="space-y-6 p-6 md:p-8">
-              <p className="text-sm text-bone">Calculate exactly how much your employer pays you to sit down.</p>
+              <p className="text-sm text-bone">Calculate exactly how much your employer pays you to sit down and grind.</p>
 
               <div>
                 <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Annual Salary (USD)</label>
@@ -69,7 +69,7 @@ export function BathroomROI() {
                   <p className="mt-2 font-mono text-3xl text-pearl">{min}:{sec}</p>
                 </div>
                 <div className="border border-ink/40 bg-charcoal p-4">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Earned (sitting)</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Grind earned</p>
                   <p className="mt-2 font-display text-3xl text-necro">${earned.toFixed(4)}</p>
                 </div>
               </div>
@@ -77,7 +77,7 @@ export function BathroomROI() {
               <div className="grid grid-cols-3 gap-3">
                 <button onClick={() => setRunning(true)} disabled={running}
                   className="inline-flex items-center justify-center gap-2 border border-necro/60 bg-necro/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-necro transition-all hover:bg-necro/20 disabled:opacity-40">
-                  <Play className="h-3.5 w-3.5" /> Start Poop
+                  <Play className="h-3.5 w-3.5" /> Start Grind
                 </button>
                 <button onClick={() => setRunning(false)} disabled={!running}
                   className="inline-flex items-center justify-center gap-2 border border-pink/60 bg-pink/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pink transition-all hover:bg-pink/20 disabled:opacity-40">
@@ -90,7 +90,7 @@ export function BathroomROI() {
               </div>
 
               <p className="border-t border-border/60 pt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/50">
-                Rate: ${ratePerSec.toFixed(6)}/sec · based on 2,080 work hrs/yr
+                Rate: ${ratePerSec.toFixed(6)}/sec · based on 2,080 grind hrs/yr
               </p>
             </div>
           </div>

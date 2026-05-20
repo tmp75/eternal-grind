@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import {
-  Sparkles, Briefcase, Ghost, Lock, RefreshCw, Trash2,
+  Flame, Briefcase, Ghost, Lock, RefreshCw, Trash2,
   Calendar as CalIcon, AppleIcon, Plus, Play, X, ExternalLink,
 } from "lucide-react";
 import { buildDefaultWeek, TRIGGER_EVENTS, type BlockType, type CalendarCell } from "@/lib/ooo";
@@ -13,10 +13,10 @@ import { fetchIcs, IcsError } from "@/lib/ical";
 export const Route = createFileRoute("/calendar")({
   head: () => ({
     meta: [
-      { title: "Inverse Calendar — $OOO" },
-      { name: "description", content: "Connect Google or Apple Calendar, edit your inverse week. Click cells, drag-select, apply templates." },
-      { property: "og:title", content: "Inverse Calendar — $OOO" },
-      { property: "og:description", content: "Free time is the deliverable. Edit your week, invert reality." },
+      { title: "Grind Calendar — $INKO" },
+      { name: "description", content: "Connect Google or Apple Calendar. Default state: grinding. Stack smug grind steps on top of your work. Reset never touches real meetings." },
+      { property: "og:title", content: "Grind Calendar — $INKO" },
+      { property: "og:description", content: "The grind is the default. Edit your week. Reset keeps real bookings safe." },
     ],
   }),
   component: CalendarPage,
@@ -24,14 +24,16 @@ export const Route = createFileRoute("/calendar")({
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
 const HOURS = Array.from({ length: 9 }, (_, i) => i + 9);
-const CYCLE: BlockType[] = ["free", "work", "ghost"];
+// Cycle: pure work → smug grind → ghost
+const CYCLE: BlockType[] = ["work", "free", "ghost"];
 function nextType(t: BlockType): BlockType { return CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]; }
 function key(d: number, h: number) { return `${d}-${h}`; }
 
-const ICON_FOR: Record<BlockType, typeof Sparkles> = {
-  free: Sparkles, work: Briefcase, ghost: Ghost,
+const ICON_FOR: Record<BlockType, typeof Flame> = {
+  free: Flame, work: Briefcase, ghost: Ghost,
 };
-const LABEL_FOR: Record<BlockType, string> = { free: "Free", work: "Work", ghost: "Ghost" };
+const LABEL_FOR: Record<BlockType, string> = { free: "Grind", work: "Work", ghost: "Ghost" };
+const isInkoOrigin = (o?: string) => o === "inko" || o === "ooo" || !o;
 
 function CalendarPage() {
   const [profile, hydrated] = useProfile();
@@ -42,29 +44,25 @@ function CalendarPage() {
   const [connectOpen, setConnectOpen] = useState<null | "google" | "apple">(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  // Hydrate from profile once
   useEffect(() => {
     if (!hydrated) return;
     if (profile.calendar && profile.calendar.length) setCells(profile.calendar);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
-  // Persist user edits (only OOO cells)
   useEffect(() => {
     if (!hydrated) return;
-    const oooCells = cells.filter((c) => c.origin !== "external");
-    setProfile({ calendar: oooCells });
+    const inkoCells = cells.filter((c) => c.origin !== "external");
+    setProfile({ calendar: inkoCells });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cells, hydrated]);
 
-  // Overlay external events onto the grid (read-only). Recompute when events change.
   useEffect(() => {
     if (!hydrated) return;
     setCells((prev) => {
-      const baseOoo = prev.filter((c) => c.origin !== "external");
-      // Map external events into the current Mon–Fri 9–18 grid
+      const baseInko = prev.filter((c) => c.origin !== "external");
       const today = new Date();
-      const dow = (today.getDay() + 6) % 7; // Mon = 0
+      const dow = (today.getDay() + 6) % 7;
       const monday = new Date(today);
       monday.setHours(0, 0, 0, 0);
       monday.setDate(monday.getDate() - dow);
@@ -83,9 +81,8 @@ function CalendarPage() {
           });
         }
       }
-      // Build merged map: external overrides ooo
       const map = new Map<string, CalendarCell>();
-      for (const c of baseOoo) map.set(key(c.day, c.hour), c);
+      for (const c of baseInko) map.set(key(c.day, c.hour), c);
       for (const c of overlays) map.set(key(c.day, c.hour), c);
       return Array.from(map.values()).sort((a, b) => a.day - b.day || a.hour - b.hour);
     });
@@ -93,26 +90,26 @@ function CalendarPage() {
   }, [profile.externalEvents, hydrated]);
 
   const counts = useMemo(() => {
-    let free = 0, work = 0, ghost = 0, booked = 0;
+    let grind = 0, work = 0, ghost = 0, booked = 0;
     for (const c of cells) {
       if (c.origin === "external") booked++;
-      else if (c.type === "free") free++;
+      else if (c.type === "free") grind++;
       else if (c.type === "work") work++;
       else ghost++;
     }
-    return { free, work, ghost, booked };
+    return { grind, work, ghost, booked };
   }, [cells]);
-  const ratio = counts.work + counts.booked === 0 ? "∞ : 0" : `${(counts.free / (counts.work + counts.booked)).toFixed(1)} : 1`;
+  const ratio = counts.work + counts.booked === 0 ? "∞ : 0" : `${(counts.grind / (counts.work + counts.booked)).toFixed(2)} : 1`;
 
   function setCell(d: number, h: number, type: BlockType, label?: string) {
     setCells((prev) => prev.map((c) =>
       c.day === d && c.hour === h && c.origin !== "external"
-        ? { ...c, type, label: label ?? c.label, origin: "ooo" } : c,
+        ? { ...c, type, label: label ?? c.label, origin: "inko" } : c,
     ));
   }
   function setBulk(predicate: (c: CalendarCell) => boolean, type: BlockType, label?: string) {
     setCells((prev) => prev.map((c) =>
-      c.origin !== "external" && predicate(c) ? { ...c, type, label: label ?? c.label, origin: "ooo" } : c,
+      c.origin !== "external" && predicate(c) ? { ...c, type, label: label ?? c.label, origin: "inko" } : c,
     ));
   }
 
@@ -141,15 +138,14 @@ function CalendarPage() {
   }, [drag]);
 
   const templates = [
-    { name: "Strategic Free Afternoon", apply: () => setBulk((c) => c.hour >= 14, "free", "Strategic Free Afternoon") },
-    { name: "Ghost Friday", apply: () => setBulk((c) => c.day === 4, "ghost", "Ghost Friday") },
-    { name: "Sacred Lunch (12–14)", apply: () => setBulk((c) => c.hour === 12 || c.hour === 13, "free", "Sacred Lunch") },
-    { name: "Meeting I Cancelled in My Head", apply: () => setBulk((c) => c.type === "work" && c.origin !== "external", "ghost", "Meeting I Cancelled in My Head") },
+    { name: "Maximum Grind Afternoon", apply: () => setBulk((c) => c.hour >= 14, "free", "Smug Grind") },
+    { name: "Sigma Friday", apply: () => setBulk((c) => c.day === 4, "ghost", "Sigma Friday") },
+    { name: "Desk Lunch (12–14)", apply: () => setBulk((c) => c.hour === 12 || c.hour === 13, "free", "Desk Lunch") },
+    { name: "Cancel in My Head", apply: () => setBulk((c) => c.type === "work" && c.origin !== "external", "ghost", "Cancelled (mentally)") },
     {
-      name: "Reset OOO blocks",
+      name: "Reset INKO steps",
       apply: () => {
         const fresh = buildDefaultWeek();
-        // Preserve external cells
         setCells((prev) => {
           const externals = prev.filter((c) => c.origin === "external");
           const map = new Map<string, CalendarCell>();
@@ -157,7 +153,7 @@ function CalendarPage() {
           for (const c of externals) map.set(key(c.day, c.hour), c);
           return Array.from(map.values()).sort((a, b) => a.day - b.day || a.hour - b.hour);
         });
-        toast("OOO blocks reset", { description: "Your real bookings stay put." });
+        toast("INKO steps reset", { description: "Your real bookings stay put." });
       },
     },
   ];
@@ -184,18 +180,17 @@ function CalendarPage() {
       <section className="relative overflow-hidden border-b border-border py-20 md:py-28">
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-30 ink-bleed" aria-hidden />
         <div className="mx-auto max-w-[1400px] px-6 md:px-12">
-          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Module 03 — Week of forever</p>
+          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Module 03 — Week of grind</p>
           <h1 className="font-display text-6xl leading-[0.95] tracking-tight text-pearl md:text-8xl text-glow">
-            The Inverse<br /><em>Calendar.</em>
+            The Grind<br /><em>Calendar.</em>
           </h1>
           <p className="mt-8 max-w-2xl font-display text-xl italic text-bone md:text-2xl">
-            Connect your real calendar. Overlay your OOO blocks. Reset never touches a real meeting.
+            Default state: grinding. Stack smug grind steps on top of your work. Reset never touches a real meeting.
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-12">
-        {/* Connect calendars */}
         <div className="mb-8 border border-border bg-charcoal">
           <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
             <span className="flex items-center gap-2"><CalIcon className="h-3.5 w-3.5 text-ink" /> Connected calendars</span>
@@ -234,14 +229,13 @@ function CalendarPage() {
           )}
         </div>
 
-        {/* Stats */}
         <div className="mb-6 grid gap-3 md:grid-cols-5">
           <div className="border border-ink/40 bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Free hours</p>
-            <p className="mt-1 font-display text-3xl text-necro">{counts.free}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Grind hours</p>
+            <p className="mt-1 font-display text-3xl text-ink">{counts.grind}</p>
           </div>
           <div className="border border-border bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Wasted work</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Pure work</p>
             <p className="mt-1 font-display text-3xl text-pearl">{counts.work}</p>
           </div>
           <div className="border border-border bg-charcoal p-4">
@@ -253,12 +247,11 @@ function CalendarPage() {
             <p className="mt-1 font-display text-3xl text-bone">{counts.booked}</p>
           </div>
           <div className="border border-ink/40 bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Inversion ratio</p>
-            <p className="mt-1 font-display text-3xl text-ink">{ratio}</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Grind ratio</p>
+            <p className="mt-1 font-display text-3xl text-necro">{ratio}</p>
           </div>
         </div>
 
-        {/* Templates */}
         <div className="mb-6 flex flex-wrap gap-2">
           {templates.map((t) => (
             <button
@@ -270,7 +263,6 @@ function CalendarPage() {
           ))}
         </div>
 
-        {/* Grid */}
         <div ref={wrapRef} className="border border-border bg-obsidian" onMouseLeave={() => setDrag(null)}>
           <div className="grid grid-cols-[80px_repeat(5,1fr)] border-b border-border bg-charcoal/60 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
             <div className="border-r border-border p-4">Hour</div>
@@ -286,12 +278,12 @@ function CalendarPage() {
                 const Icon = external ? Lock : ICON_FOR[cell.type];
                 const tone = external
                   ? "bg-bone/10 cursor-not-allowed"
-                  : cell.type === "free" ? "bg-ink/15 hover:bg-ink/25"
+                  : cell.type === "free" ? "bg-ink/25 hover:bg-ink/35"
                   : cell.type === "work" ? "bg-bone/5 hover:bg-bone/10"
                   : "bg-violet/15 hover:bg-violet/25";
                 const labelTone = external ? "text-bone/70"
-                  : cell.type === "free" ? "text-necro"
-                  : cell.type === "ghost" ? "text-violet" : "text-bone/70";
+                  : cell.type === "free" ? "text-ink"
+                  : cell.type === "ghost" ? "text-violet" : "text-bone/60";
                 return (
                   <button
                     key={di} type="button" disabled={external}
@@ -312,10 +304,9 @@ function CalendarPage() {
         </div>
 
         <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
-          Click to cycle: Free → Work → Ghost. Drag to bulk-mark. Locked cells are real bookings (read-only).
+          Click to cycle: Work → Grind → Ghost. Drag to bulk-mark. Locked cells are real bookings (read-only).
         </p>
 
-        {/* Trigger events */}
         <div className="mt-16">
           <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Trigger Events · Daily</p>
           <div className="grid gap-4 md:grid-cols-3">
@@ -334,14 +325,12 @@ function CalendarPage() {
         </div>
       </section>
 
-      {/* Connect Modal */}
       <AnimatePresence>
         {connectOpen && (
           <ConnectModal kind={connectOpen} onClose={() => setConnectOpen(null)} onSubmit={(name, url) => handleConnect(connectOpen, name, url)} />
         )}
       </AnimatePresence>
 
-      {/* Trigger overlay */}
       <AnimatePresence>
         {trigger && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -354,10 +343,10 @@ function CalendarPage() {
               <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-violet">● {trigger.time}</p>
               <h3 className="mt-4 font-display text-5xl text-pearl text-glow">{trigger.label}</h3>
               <p className="mt-4 text-bone">{trigger.note}</p>
-              <p className="mt-8 font-display text-3xl italic text-necro">EVACUATING…</p>
+              <p className="mt-8 font-display text-3xl italic text-necro">INKO APPROVES…</p>
               <div className="mt-8 flex justify-center gap-3">
                 <button onClick={() => setTrigger(null)} className="border border-border px-6 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-pearl">Snooze</button>
-                <button onClick={() => setTrigger(null)} className="border border-ink bg-ink/30 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-ink/50">Acknowledge & Leave</button>
+                <button onClick={() => setTrigger(null)} className="border border-ink bg-ink/30 px-6 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-ink/50">Acknowledge & Grind</button>
               </div>
             </motion.div>
           </motion.div>
@@ -422,7 +411,7 @@ function ConnectModal({
 
           <div className="border border-violet/40 bg-violet/10 p-3 font-mono text-[10px] uppercase tracking-[0.25em] text-violet">
             <span className="flex items-center gap-2"><ExternalLink className="h-3 w-3" />
-              Two-way sync (writing OOO blocks back) requires Lovable Cloud + OAuth — coming soon.
+              Two-way sync (writing INKO steps back) requires Lovable Cloud + OAuth — coming soon.
             </span>
           </div>
 

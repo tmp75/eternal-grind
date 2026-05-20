@@ -6,8 +6,8 @@ import { Calendar as CalIcon, AppleIcon, Trash2, Download, RotateCcw } from "luc
 export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
-      { title: "Profile — $OOO" },
-      { name: "description", content: "Your rank, XP, salary, and connected calendars. Local-first. Yours." },
+      { title: "Profile — $INKO" },
+      { name: "description", content: "Your rank, Grind Points, salary, and connected calendars. Local-first. Yours." },
     ],
   }),
   component: ProfilePage,
@@ -22,12 +22,12 @@ function ProfilePage() {
     const blob = new Blob([JSON.stringify(profile, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `ooo-profile-${Date.now()}.json`;
+    a.download = `inko-profile-${Date.now()}.json`;
     a.click();
   }
   function resetProfile() {
     if (!confirm("Wipe local profile? Real bookings synced from calendars will be lost too.")) return;
-    localStorage.removeItem("ooo.profile.v1");
+    localStorage.removeItem("inko.profile.v1");
     location.reload();
   }
 
@@ -37,10 +37,10 @@ function ProfilePage() {
         <div className="mx-auto max-w-[1200px] px-6 md:px-12">
           <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Identity · Local Profile</p>
           <h1 className="font-display text-6xl leading-[0.95] tracking-tight text-pearl md:text-7xl text-glow">
-            Your<br /><em>Profile.</em>
+            Your<br /><em>Grind Profile.</em>
           </h1>
           <p className="mt-6 max-w-xl text-bone">
-            Stored locally on this device. No account, no cloud, no leaks. Export anytime.
+            Stored locally on this device. No account, no cloud, no leaks. INKO respects your privacy. INKO also doesn't care.
           </p>
         </div>
       </section>
@@ -61,7 +61,7 @@ function ProfilePage() {
             className="mt-2 w-full border border-border bg-obsidian px-3 py-2 font-mono text-pearl outline-none focus:border-ink"
           />
           <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
-            Joined {hydrated && profile.joinedAt ? new Date(profile.joinedAt).toLocaleDateString() : "—"}
+            Grinding since {hydrated && profile.joinedAt ? new Date(profile.joinedAt).toLocaleDateString() : "—"}
           </p>
         </div>
 
@@ -73,7 +73,7 @@ function ProfilePage() {
             <div className="h-full bg-ink" style={{ width: `${Math.round(rank.progress * 100)}%` }} />
           </div>
           <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
-            {profile.xp} XP {rank.next ? `· ${rank.next.xp - profile.xp} to ${rank.next.name}` : "· MAX"}
+            {profile.xp} Grind Points {rank.next ? `· ${rank.next.xp - profile.xp} to ${rank.next.name}` : "· MAX"}
           </p>
           <div className="mt-6 grid grid-cols-2 gap-3">
             <div className="border border-border bg-obsidian p-3">
@@ -86,18 +86,18 @@ function ProfilePage() {
             </div>
           </div>
           <Link to="/academy" className="mt-6 inline-block font-mono text-[10px] uppercase tracking-[0.3em] text-ink hover:underline">
-            Earn more XP →
+            Earn more Grind Points →
           </Link>
         </div>
 
         {/* Rank ladder */}
         <div className="md:col-span-2 border border-border bg-charcoal p-6">
           <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-violet">Rank ladder</p>
-          <div className="grid gap-3 md:grid-cols-5">
+          <div className="grid gap-3 md:grid-cols-6">
             {RANKS.map((r) => (
               <div key={r.name} className={`border p-4 ${r.name === rank.current.name ? "border-ink bg-ink/10 shadow-[0_0_20px_var(--ink)]" : "border-border bg-obsidian opacity-60"}`}>
                 <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">{r.xp}+ pts</p>
-                <p className="mt-1 font-display text-xl text-pearl">{r.name}</p>
+                <p className="mt-1 font-display text-lg leading-tight text-pearl">{r.name}</p>
               </div>
             ))}
           </div>

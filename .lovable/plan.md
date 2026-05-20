@@ -1,85 +1,74 @@
-# Plan — Profile, Calendar Sync, Icons, Academy Points
 
-## 1. Local user profile (foundation for everything else)
+# Rebrand: OOO → INKO — Eternal Grind
 
-New `src/lib/profile.ts` — a `localStorage`-backed profile (`ooo.profile.v1`) holding:
-- `handle` (default "Anonymous Slacker"), `joinedAt`, `salary` (for ROI), `rank`, `xp`
-- `completedLessons: number[]` (Academy progress)
-- `calendar` edits (moved here from `ooo.calendar.v1`)
-- `externalCalendars: { id, provider: "google"|"apple"|"ics", name, url, lastSync }[]`
-- `externalEvents: ExternalEvent[]` (read-only, fetched from ICS)
+Keep all current UI, components, animations, layout, routes, profile/XP, ICS calendar sync, drag-select, rank ladder. Only swap brand, copy, lore, and invert the default calendar/academy state.
 
-New `useProfile()` hook + tiny event emitter so Hero / Academy / Calendar / Footer all react to changes. SSR-safe (hydrate in `useEffect`, render placeholders first).
+## 1. Brand swap (global)
 
-New `/profile` route — minimal page: handle, salary, rank ladder progress bar, XP total, completed lessons count, connected calendars list, "Export / Reset profile" buttons.
+- Name: `OOO` → `INKO`, `Out of Office` → `Eternal Grind`
+- Ticker: `$OOO` → `$INKO`
+- Chain: `Solana · Pump.fun` → `Inkchain`
+- Supply: 1,000,000,000 (1B) $INKO
+- Tagline: "The smug meme that does nothing — and somehow stays on top."
+- Mascot: purple smug coin / character (`user-uploads://inkocoin2.png`, `user-uploads://26A0329B-…png`) — copy both into `src/assets/` and use in Hero + Ticker + 404 (replace any Bartholomew leftovers).
+- Remove every mention of: `OOO`, `Out of Office`, `Solana`, `Pump.fun`, `$OOO`, `Bartholomew`, `Eternity Corp`, `Ink Chain` (two words) → unify as `Inkchain`.
+- Update `<title>` / OG / meta in `src/routes/__root.tsx` and every leaf route.
+- New CTA link: replace `PUMP_FUN_URL` constant with `INKCHAIN_URL` (placeholder `https://inkonchain.com` until user gives final).
 
-> *Why local, not Cloud auth*: user said "profile **or local memory**". Local keeps zero-friction. The data shape is designed so we can later swap the storage layer for Lovable Cloud + auth without touching components.
+## 2. Invert the lore (smug grinder, not liberator)
 
-## 2. Calendar — connect Google & Apple
+INKO is *always* grinding (memetically). The joke: he does nothing but appears to grind harder than everyone. He teaches "peasants" his sacred grind techniques.
 
-**Honest reality** (worth knowing before approving):
-- **Apple Calendar** has no public OAuth API. The only universal way to read it is via an **ICS subscription URL** (iCloud → Calendar → Share → Public Calendar → copy `webcal://…` link). Same for Outlook/Google "secret address" links.
-- **Google Calendar two-way edit** needs per-user OAuth, which requires Lovable Cloud + your own Google Cloud OAuth app (workspace connector only reads *your* calendar, not each visitor's).
+Tone shift in copy:
+- Old: "Rest is resistance / clocked out / liberation hour"
+- New: "Eternal grind / never log off / always-on / sigma posture / smug stillness"
+- Status strings flip: "Out sick" → "Grinding", "In a meeting" → "In deep grind", "Brb" → "Grinding harder".
 
-**This pass ships the universal path that works today:**
-1. New `Connect Calendar` panel above the grid with two buttons: `Google Calendar` and `Apple Calendar`, each opening a modal with paste-friendly instructions + an ICS URL input.
-2. Pasted URL is saved to profile. We fetch it client-side, parse with `ical.js` (added via `bun add ical.js`), and overlay events onto the week grid as a fourth cell type: `booked` (read-only, neutral gray with a small lock icon, shows event title on hover).
-3. "Refresh" button + auto-refresh on mount (cached 10 min). CORS-safe ICS hosts (Google/iCloud public links) work directly from the browser; if a URL fails CORS we surface a clear error and a "we'll add server-side fetch when Cloud is enabled" note.
-4. UI also exposes a disabled `Connect with Google (full two-way sync)` button with a tooltip: "Requires Lovable Cloud + Google OAuth setup — coming soon." This makes the upgrade path obvious without faking it.
+## 3. Calendar — default to WORK, overlay grind steps
 
-**Edit-back** (writing OOO blocks to the real calendar) is **out of scope** this pass — requires Cloud + OAuth. Documented as the next step.
+In `src/lib/ooo.ts` (rename file to `src/lib/inko.ts`, update imports):
+- `buildDefaultWeek()` returns every 9–17 cell as `type: "work"`, `origin: "ooo"` → `origin: "inko"`.
+- Replace `FREE_BLOCKS` with `GRIND_STEPS`: small overlays that turn specific cells into `type: "grind"` (new BlockType replacing `free`) with labels like "Smug Standup", "Sigma Lunch (eaten at desk)", "Performative Email Sprint", "Calendar Theater", "Ghost Productivity", "Inbox Zero Cosplay".
+- BlockType becomes: `"work" | "grind" | "ghost"`. Colors: work = neutral bone/gray (dominant), grind = violet/ink accent (the "tiny corner" inverted — grind is now the highlight on top of work), ghost = dimmed.
+- Legend updates: "Pure grind", "Smug grind overlay", "Ghost step".
+- Drag-select, templates, reset-OOO-blocks (rename → "Reset INKO steps"), ICS sync, locked external events: **unchanged**.
+- Template buttons renamed: "Ghost Friday" → "Sigma Friday", "Sacred Lunch" → "Desk Lunch", "Full Free Week" → "Maximum Grind Week".
 
-## 3. Reset week — preserve real bookings
+## 4. Academy — always grinding, count points unchanged
 
-`Reset week` button currently calls `setCells(buildDefaultWeek())` which nukes everything. New behavior:
-- Only resets cells whose origin is `"ooo"` (user-created or template-applied OOO blocks).
-- Cells whose origin is `"external"` (from imported ICS) are untouched.
-- Add `origin: "ooo" | "external"` field to `CalendarCell`. External events are merged on top of the user week, never persisted into the editable layer.
-- Button label tightened to `Reset OOO blocks` with a small confirmation toast: "Your real bookings stay put."
+- Rename lessons collection theme: every lesson reframed as a "grind technique" INKO teaches.
+- Keep XP, ranks, completion logic intact. Rank ladder rename:
+  `Intern → Apprentice Grinder → Senior Grinder → Smug Sigma → INKO Disciple → INKO Himself`
+- Lesson categories: "Posture", "Optics", "Calendar Theater", "Slack Sigma", "Email Aikido", "Smug Stillness".
+- XP HUD label: "Grind Points" instead of "Lich Points".
+- Filter labels stay (Learned / Unlearned).
 
-## 4. Remove emojis → Lucide icons
+## 5. Routes / Nav
 
-Audit + swap across the app. Each emoji gets a semantic Lucide icon styled with our tokens (text-necro / text-ink / text-violet):
+- Keep all routes; rename labels only:
+  - `/ticker` label `$OOO` → `$INKO`
+  - Nav subtitle `// Inverted Calendar` → `// Eternal Grind`
+- `/ticker` page: rewrite parody whitepaper for $INKO on Inkchain, 1B supply, "candles invert when you pretend to work harder", MARKET OPEN bell → "GRIND BELL @ 09:00".
 
-| Emoji | Replacement |
-|---|---|
-| 🟢 Free | `Sparkles` (necro) |
-| ⚫ Work | `Briefcase` (bone/60) |
-| 👻 Ghost | `Ghost` (violet) |
-| 🍝 Sacred Lunch | `UtensilsCrossed` |
-| 🚽 Paid Toilet | `Armchair` |
-| ☕ Coffee Pilgrimage | `Coffee` |
-| 🎯 Fake Focus | `Target` |
-| 🤧 Doctor's Note | `Stethoscope` |
-| ▶ / ■ in ROI | `Play` / `Square` |
-| ● status dots | `Circle` filled |
+## 6. Sections to rewrite copy (no structural changes)
 
-Files touched: `InvertedCalendarPreview.tsx`, `calendar.tsx`, `MissionsPreview.tsx`, `missions.tsx`, `BathroomROI.tsx`, `Hero.tsx` badges, `Liberation.tsx`, `SurvivalTactics.tsx`, `TickerBand.tsx` (if any), `ooo.ts` data (drop emoji fields, add `icon: LucideIconName`).
+`Hero.tsx`, `TickerBand.tsx`, `Liberation.tsx` (rename component+route copy to `EternalGrind` section — file rename optional), `MissionsPreview.tsx`, `SurvivalTactics.tsx` (TACTICS reframed as grind tactics: Costanza Protocol → "The Costanza Grind", Green Dot Theater stays, Reply-All Friday → "Reply-All Sigma Hour"), `BathroomROI.tsx` ("paid toilet" → "Toilet Grind ROI — earn while grinding spiritually"), `TokenomicsTerminal.tsx` (1B supply, Inkchain, $INKO utility = unlocks grind techniques), `InvertedCalendarPreview.tsx` (label flip: work dominates, grind is the bright overlay).
 
-Ticker marquees keep their text-only punch (no emojis there today anyway).
+## 7. Assets
 
-## 5. Academy — actually count points
+- Copy `user-uploads://inkocoin2.png` → `src/assets/inko-coin.png`
+- Copy `user-uploads://26A0329B-8687-4345-9EF2-8ACA2C0DBDF3.png` → `src/assets/inko-mascot.png`
+- Use coin in Ticker/Tokenomics, mascot in Hero + 404.
 
-- Each lesson card gets a `Mark as learned` toggle (Lucide `CircleCheck` / `Circle`).
-- Clicking adds `lesson.xp` to `profile.xp` and pushes `lesson.n` into `completedLessons`. Unclick reverses it.
-- Top of `/academy` gains a sticky **XP HUD**: current XP, current rank, progress bar to next rank, "Lessons mastered: X / 50".
-- Rank ladder sidebar highlights the current rank (glow + `●`) and dims locked ones.
-- Filter chip `Learned` / `Unlearned` so users can find what's left.
-- Confetti-free, but a subtle violet flash + rank-up modal when crossing a threshold (e.g. 100 XP → Office Drone).
-- Hero CTA pill changes from `ENTER THE ACADEMY (100 LESSONS)` → `ENTER THE ACADEMY (X / 100 MASTERED)` reading from profile.
-- Footer/SiteNav can show current rank as a tiny chip next to the logo (optional, low-key).
+## 8. Technical notes
 
-## 6. Out of scope (intentionally, this pass)
+- `src/lib/profile.ts`: storage key bumped `ooo.profile.v1` → `inko.profile.v1` (one-time reset acceptable since local-only). Same for calendar key.
+- BlockOrigin renamed `"ooo"` → `"inko"` everywhere; type alias kept.
+- No backend changes. No new deps.
+- Lucide icons stay (no emojis).
 
-- Real Google/Apple OAuth + writing events back to provider calendars (needs Cloud + your own Google Cloud project).
-- Multi-device sync of profile (needs Cloud auth).
-- Notifications/push for trigger events.
+## Out of scope
 
-## Technical notes
-
-- New deps: `ical.js` for ICS parsing, `lucide-react` (already present).
-- `src/lib/profile.ts` exposes `getProfile()`, `setProfile(patch)`, `useProfile()`, `addXp(n)`, `toggleLesson(n)`, `addExternalCalendar(...)`. All `localStorage`-backed with a versioned key + safe JSON parse.
-- `src/lib/ical.ts` thin wrapper: `fetchIcs(url) → ExternalEvent[]` with 10-min in-memory cache and clear error types (`cors`, `parse`, `network`).
-- `CalendarCell` gains `origin: "ooo" | "external"` and optional `externalId`. External events render in a new `bg-bone/10` style with `Lock` icon, non-clickable, non-draggable.
-- Hydration discipline preserved (all profile/external reads happen inside `useEffect`).
-- No new routes besides `/profile`. No backend.
+- Real Inkchain contract address (placeholder until provided)
+- Real OAuth Google/Apple sync (still ICS-only)
+- New routes

@@ -1,21 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import inkoCoin from "@/assets/inko-coin.png";
 
 export const Route = createFileRoute("/ticker")({
   head: () => ({
     meta: [
-      { title: "$OOO Ticker — Inverted Market" },
-      { name: "description", content: "The OOO market: the less you work, the higher it goes. Inverted candles, parody whitepaper, MARKET OPEN bell at 17:00." },
-      { property: "og:title", content: "$OOO Ticker — Inverted Market" },
-      { property: "og:description", content: "Less work = higher chart. MARKET OPEN at 17:00." },
+      { title: "$INKO Ticker — The Smug Chart" },
+      { name: "description", content: "The $INKO market on Inkchain: the less you actually work, the higher it goes. Inverted candles, parody whitepaper, GRIND BELL at 09:00." },
+      { property: "og:title", content: "$INKO Ticker — Eternal Grind" },
+      { property: "og:description", content: "The smug chart on Inkchain. 1B supply. Grinds while you sleep." },
     ],
   }),
   component: TickerPage,
 });
 
 function generateCandles(seed: number) {
-  // Inverted candles — green when "low work activity"
+  // Inverted candles — green when "low actual work, high smug grind"
   const arr: { open: number; close: number; high: number; low: number }[] = [];
   let p = 100;
   for (let i = 0; i < 28; i++) {
@@ -32,11 +33,11 @@ function generateCandles(seed: number) {
 
 function TickerPage() {
   const [seed, setSeed] = useState(1);
-  const [price, setPrice] = useState(420.69);
+  const [price, setPrice] = useState(0.0420);
   useEffect(() => {
     const id = setInterval(() => {
       setSeed((s) => s + 1);
-      setPrice((p) => +(p + (Math.random() * 4 - 1.5)).toFixed(2));
+      setPrice((p) => +(p + (Math.random() * 0.004 - 0.0015)).toFixed(6));
     }, 2200);
     return () => clearInterval(id);
   }, []);
@@ -49,19 +50,23 @@ function TickerPage() {
     <main className="pt-24">
       <section className="border-b border-border py-24 md:py-32">
         <div className="mx-auto max-w-[1400px] px-6 md:px-12">
-          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">— Inverted Market —</p>
+          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">— The Smug Chart · Inkchain —</p>
           <div className="flex flex-wrap items-end justify-between gap-6">
-            <h1 className="font-display text-6xl leading-[0.95] tracking-tight text-pearl md:text-8xl text-glow">
-              $OOO
-            </h1>
+            <div className="flex items-center gap-6">
+              <img src={inkoCoin} alt="$INKO" className="h-20 w-20 drop-shadow-[0_10px_40px_rgba(123,44,255,0.55)] md:h-28 md:w-28" draggable={false} />
+              <h1 className="font-display text-6xl leading-[0.95] tracking-tight text-pearl md:text-8xl text-glow">
+                $INKO
+              </h1>
+            </div>
             <div className="text-right">
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Last print</p>
-              <p className="font-display text-5xl text-necro">€{price.toFixed(2)}</p>
+              <p className="font-display text-5xl text-necro">${price.toFixed(6)}</p>
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink">▲ less work · higher chart</p>
             </div>
           </div>
           <p className="mt-8 max-w-2xl font-display text-xl italic text-bone md:text-2xl">
-            The market is inverted. Every minute you do not work is a green candle. The bell rings at 17:00.
+            The market is rigged in INKO's favor. Every minute you pretend to grind is a green candle.
+            The bell rings at 09:00 and never stops.
           </p>
         </div>
       </section>
@@ -69,7 +74,7 @@ function TickerPage() {
       {/* Chart */}
       <section className="border-b border-border bg-charcoal py-16">
         <div className="mx-auto max-w-[1400px] px-6 md:px-12">
-          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Inverted candles · 28 sessions</p>
+          <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Smug candles · 28 sessions</p>
           <div className="relative h-[340px] border border-border bg-obsidian p-6">
             <div className="absolute inset-6 flex items-end gap-1">
               {candles.map((c, i) => {
@@ -107,9 +112,9 @@ function TickerPage() {
             </div>
           </div>
           <div className="mt-3 flex justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
-            <span>09:00 desk surrender</span>
-            <span className="text-ink">● MARKET OPENS @ 17:00 — bell rings</span>
-            <span>23:59 deep peace</span>
+            <span>09:00 grind bell</span>
+            <span className="text-ink">● MARKET ALWAYS OPEN · INKO NEVER SLEEPS</span>
+            <span>23:59 still grinding</span>
           </div>
         </div>
       </section>
@@ -117,25 +122,28 @@ function TickerPage() {
       {/* Whitepaper */}
       <section className="mx-auto max-w-3xl px-6 py-20 md:px-12">
         <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Parody whitepaper · v1</p>
-        <h2 className="font-display text-4xl text-pearl md:text-5xl">A Theory of Inverted Productivity</h2>
+        <h2 className="font-display text-4xl text-pearl md:text-5xl">A Theory of Smug Productivity</h2>
         <div className="mt-8 space-y-6 text-lg leading-relaxed text-pearl/90">
           <p>
-            Classical markets reward output. The OOO market rewards <em className="text-ink">absence</em>. Each unit of
-            non-work performed by the holder issues a green candle into the index. The chart is therefore not a
-            measurement of activity but a measurement of <em>peace acquired</em>.
+            Classical markets reward output. The $INKO market rewards <em className="text-ink">posture</em>. Each unit
+            of theatrical grind performed by the holder issues a green candle into the index. The chart is therefore
+            not a measurement of activity but a measurement of <em>smugness accumulated</em>.
           </p>
           <p>
-            The bell rings at 17:00 every weekday. The bell does not ring on weekends — the weekend is, by definition,
-            already open market. There are no halts. There are no circuit breakers. There is only the slow ascent of
-            a chart that goes up when you go home.
+            The Grind Bell rings at 09:00 every weekday. It does not ring at 17:00 — INKO does not clock out.
+            INKO has never clocked in either. There are no halts. There are no circuit breakers. There is only
+            the slow ascent of a chart that goes up when its holder pretends to type.
           </p>
           <p className="border-l-2 border-ink pl-5 font-display text-xl italic text-bone">
-            "The most bullish thing you can do for $OOO is close your laptop."
+            "The most bullish thing you can do for $INKO is open a spreadsheet and stare at it for 6 hours."
           </p>
           <p>
-            Lich Points (XP) do not entitle holders to anything. They are a memory of how much rest you have refused
-            to apologize for. They cannot be sold, transferred, or borrowed against. They can only be earned by
-            leaving on time.
+            Grind Points (XP) do not entitle holders to anything. They are a memory of how much you got paid to
+            do nothing. They cannot be sold, transferred, or borrowed against. They can only be earned by
+            mastering INKO's curriculum.
+          </p>
+          <p className="font-mono text-sm uppercase tracking-[0.3em] text-bone/60">
+            Ticker: $INKO · Supply: 1,000,000,000 · Network: Inkchain · Tax: 0/0 · Utility: spiritual
           </p>
         </div>
       </section>

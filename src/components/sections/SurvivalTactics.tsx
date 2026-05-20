@@ -5,12 +5,12 @@ export function SurvivalTactics() {
   return (
     <section className="relative overflow-hidden py-32 md:py-44">
       <div className="mx-auto max-w-[1300px] px-6 md:px-12">
-        <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Module 01 / Content Matrix</p>
+        <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Module 01 / Grind Tactics</p>
         <h2 className="max-w-3xl font-display text-5xl leading-[1.02] tracking-tight text-pearl md:text-6xl">
-          Corporate Survival Tactics.
+          The Sacred Art of Looking Busy.
         </h2>
         <p className="mt-6 max-w-2xl text-bone">
-          Field-tested protocols for reclaiming your time, your sanity, and your coffee breaks.
+          Field-tested grind protocols straight from INKO's couch. Look unstoppable. Produce nothing. Outrank everyone.
         </p>
 
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -34,7 +34,7 @@ export function SurvivalTactics() {
                 <h3 className="mt-4 font-display text-2xl leading-tight text-pearl">{t.title}</h3>
                 <p className="mt-3 flex-1 text-bone">{t.body}</p>
                 <p className="mt-6 border-t border-border/60 pt-3 font-mono text-[9px] uppercase tracking-[0.3em] text-bone/50">
-                  // FILED UNDER: $OOO
+                  // FILED UNDER: $INKO
                 </p>
               </motion.article>
             );

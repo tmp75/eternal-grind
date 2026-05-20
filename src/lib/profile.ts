@@ -30,16 +30,17 @@ export interface Profile {
 
 export const RANKS = [
   { name: "Intern", xp: 0 },
-  { name: "Office Drone", xp: 100 },
-  { name: "Senior Slacker", xp: 300 },
-  { name: "Apprentice", xp: 700 },
-  { name: "Lich CEO", xp: 1500 },
+  { name: "Apprentice Grinder", xp: 100 },
+  { name: "Senior Grinder", xp: 300 },
+  { name: "Smug Sigma", xp: 700 },
+  { name: "INKO Disciple", xp: 1500 },
+  { name: "INKO Himself", xp: 2500 },
 ] as const;
 
-const KEY = "ooo.profile.v1";
+const KEY = "inko.profile.v1";
 
 const DEFAULT_PROFILE: Profile = {
-  handle: "Anonymous Slacker",
+  handle: "Anonymous Grinder",
   joinedAt: 0, // hydrated on first load
   salary: 60_000,
   xp: 0,
