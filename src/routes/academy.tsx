@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CircleCheck, Circle } from "lucide-react";
 import { LESSONS, LESSON_TAGS, type LessonTag, type LessonTruth } from "@/lib/academy";
 import { useProfile, toggleLesson, rankFor, RANKS } from "@/lib/profile";
