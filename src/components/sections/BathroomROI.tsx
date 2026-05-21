@@ -1,16 +1,35 @@
 import { useEffect, useRef, useState } from "react";
-import { Play, Square, RotateCcw, Circle } from "lucide-react";
-import { useProfile, setProfile } from "@/lib/profile";
+import {
+  Play, Square, RotateCcw, Circle, Armchair, Coffee, Wind,
+  UtensilsCrossed, EyeOff, Users, type LucideIcon,
+} from "lucide-react";
+import { useProfile, setProfile, addActivitySeconds, type ActivityId } from "@/lib/profile";
+
+interface Activity { id: ActivityId; label: string; icon: LucideIcon; tagline: string; }
+const ACTIVITIES: Activity[] = [
+  { id: "toilet", label: "Toilet Grind", icon: Armchair, tagline: "Spiritual ROI. Per second." },
+  { id: "coffee", label: "Coffee Walk", icon: Coffee, tagline: "The mug is the badge." },
+  { id: "smoke",  label: "Smoke Break", icon: Wind, tagline: "Outside. Untouchable." },
+  { id: "lunch",  label: "Eating Lunch", icon: UtensilsCrossed, tagline: "Crumbs are receipts." },
+  { id: "busy",   label: "Looking Busy", icon: EyeOff, tagline: "Two monitors. Zero output." },
+  { id: "nod",    label: "Strategic Nod", icon: Users, tagline: "'Good point.' Meeting moves on." },
+];
 
 export function BathroomROI() {
-  const [profile] = useProfile();
+  const [profile, hydrated] = useProfile();
+  const [activeId, setActiveId] = useState<ActivityId>("toilet");
   const [running, setRunning] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const tRef = useRef<number | null>(null);
+  const lastFlushRef = useRef(0);
 
   const salary = profile.salary;
-  const ratePerSec = salary / (2080 * 3600);
+  const hpw = Math.max(1, profile.hoursPerWeek || 40);
+  const ratePerSec = salary / (hpw * 52 * 3600);
   const earned = seconds * ratePerSec;
+  const perMin = ratePerSec * 60;
+  const perDay = ratePerSec * 3600 * 8;
+  const active = ACTIVITIES.find((a) => a.id === activeId)!;
 
   useEffect(() => {
     if (!running) return;
@@ -18,49 +37,127 @@ export function BathroomROI() {
     return () => { if (tRef.current) window.clearInterval(tRef.current); };
   }, [running]);
 
+  // Persist seconds to profile in 5s chunks while running.
+  useEffect(() => {
+    if (!running) return;
+    if (seconds - lastFlushRef.current >= 5) {
+      addActivitySeconds(activeId, seconds - lastFlushRef.current);
+      lastFlushRef.current = seconds;
+    }
+  }, [seconds, running, activeId]);
+
+  function stop() {
+    if (running && seconds > lastFlushRef.current) {
+      addActivitySeconds(activeId, seconds - lastFlushRef.current);
+      lastFlushRef.current = seconds;
+    }
+    setRunning(false);
+  }
+  function reset() {
+    stop();
+    setSeconds(0);
+    lastFlushRef.current = 0;
+  }
+  function pickActivity(id: ActivityId) {
+    if (running) stop();
+    setActiveId(id);
+    setSeconds(0);
+    lastFlushRef.current = 0;
+  }
+
   const min = Math.floor(seconds / 60).toString().padStart(2, "0");
   const sec = (seconds % 60).toString().padStart(2, "0");
+
+  const lifetimeSec = hydrated ? Object.values(profile.activityTotals).reduce((s, n) => s + n, 0) : 0;
+  const lifetimeEarned = lifetimeSec * ratePerSec;
 
   return (
     <section className="relative overflow-hidden border-y border-border bg-charcoal py-32 md:py-44">
       <div className="pointer-events-none absolute inset-0 pinstripe opacity-30" aria-hidden />
       <div className="relative mx-auto max-w-[1300px] px-6 md:px-12">
-        <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
+        <div className="grid gap-12 lg:grid-cols-[1fr_1.2fr] lg:items-start">
           <div>
             <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Module 02 / Tool</p>
             <h2 className="font-display text-5xl leading-[1.02] tracking-tight text-pearl md:text-6xl">
-              Toilet Grind ROI.
+              Smug Paycheck Calculator.
             </h2>
             <p className="mt-6 max-w-md text-bone">
-              Every second on the throne is grind. Spiritual grind. Paid grind.
-              INKO does this 14 hours a day. Quantify yours.
+              Every second you do nothing is paid. Pick your weapon, start the timer,
+              and watch the dollars accrue. INKO does this for a living.
             </p>
             <ul className="mt-8 space-y-3 text-pearl">
               <li className="flex items-start gap-3"><span className="text-ink">→</span> Live per-second grind earnings</li>
-              <li className="flex items-start gap-3"><span className="text-ink">→</span> Receipts for HR (do not actually send)</li>
-              <li className="flex items-start gap-3"><span className="text-ink">→</span> Salary saved to your profile</li>
+              <li className="flex items-start gap-3"><span className="text-ink">→</span> Six certified smug activities</li>
+              <li className="flex items-start gap-3"><span className="text-ink">→</span> Lifetime totals saved to your profile</li>
             </ul>
+
+            {hydrated && lifetimeSec > 0 && (
+              <div className="mt-8 border border-ink/40 bg-obsidian p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Lifetime grind</p>
+                <p className="mt-2 font-display text-3xl text-necro">${lifetimeEarned.toFixed(2)}</p>
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
+                  {Math.floor(lifetimeSec / 60)} minutes of smug, all stacked.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="border border-ink/40 bg-obsidian shadow-[0_0_60px_-20px_var(--ink)]">
             <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
-              <span className="flex items-center gap-2"><Circle className="h-2 w-2 fill-necro text-necro" /> Toilet Grind ROI Calculator</span>
-              <span className="text-ink">v1.000</span>
+              <span className="flex items-center gap-2"><Circle className="h-2 w-2 fill-necro text-necro" /> Smug Paycheck Calculator</span>
+              <span className="text-ink">v2.000</span>
             </div>
 
             <div className="space-y-6 p-6 md:p-8">
-              <p className="text-sm text-bone">Calculate exactly how much your employer pays you to sit down and grind.</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Annual salary (USD)</label>
+                  <div className="flex items-center border border-border bg-charcoal">
+                    <span className="border-r border-border px-3 py-3 font-mono text-pearl">$</span>
+                    <input
+                      type="number" min={0} step={1000} value={salary}
+                      onChange={(e) => setProfile({ salary: Math.max(0, Number(e.target.value) || 0) })}
+                      className="w-full bg-transparent px-3 py-3 font-mono text-lg text-pearl outline-none"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
+                    <span>Working hours / week</span><span className="text-ink">{hpw}h</span>
+                  </label>
+                  <input
+                    type="range" min={10} max={80} step={1} value={hpw}
+                    onChange={(e) => setProfile({ hoursPerWeek: Number(e.target.value) })}
+                    className="w-full accent-[var(--ink)]"
+                  />
+                  <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.3em] text-bone/50">
+                    Less hours = higher $/sec. INKO recommends as few as legally tolerated.
+                  </p>
+                </div>
+              </div>
 
               <div>
-                <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Annual Salary (USD)</label>
-                <div className="flex items-center border border-border bg-charcoal">
-                  <span className="border-r border-border px-3 py-3 font-mono text-pearl">$</span>
-                  <input
-                    type="number" min={0} step={1000} value={salary}
-                    onChange={(e) => setProfile({ salary: Math.max(0, Number(e.target.value) || 0) })}
-                    className="w-full bg-transparent px-3 py-3 font-mono text-lg text-pearl outline-none"
-                  />
+                <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Pick an activity</p>
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+                  {ACTIVITIES.map((a) => {
+                    const Icon = a.icon;
+                    const sel = a.id === activeId;
+                    return (
+                      <button
+                        key={a.id} onClick={() => pickActivity(a.id)}
+                        className={`flex items-center gap-2 border px-3 py-3 text-left transition-all ${
+                          sel ? "border-ink bg-ink/15 text-pearl" : "border-border bg-charcoal text-bone hover:border-pearl"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0 text-ink" strokeWidth={2} />
+                        <span className="font-mono text-[10px] uppercase tracking-[0.2em]">{a.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
+                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-violet">
+                  {active.label} — {active.tagline}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -69,7 +166,7 @@ export function BathroomROI() {
                   <p className="mt-2 font-mono text-3xl text-pearl">{min}:{sec}</p>
                 </div>
                 <div className="border border-ink/40 bg-charcoal p-4">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Grind earned</p>
+                  <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Earned this session</p>
                   <p className="mt-2 font-display text-3xl text-necro">${earned.toFixed(4)}</p>
                 </div>
               </div>
@@ -79,19 +176,21 @@ export function BathroomROI() {
                   className="inline-flex items-center justify-center gap-2 border border-necro/60 bg-necro/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-necro transition-all hover:bg-necro/20 disabled:opacity-40">
                   <Play className="h-3.5 w-3.5" /> Start Grind
                 </button>
-                <button onClick={() => setRunning(false)} disabled={!running}
+                <button onClick={stop} disabled={!running}
                   className="inline-flex items-center justify-center gap-2 border border-pink/60 bg-pink/10 px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pink transition-all hover:bg-pink/20 disabled:opacity-40">
-                  <Square className="h-3.5 w-3.5" /> Flush & Return
+                  <Square className="h-3.5 w-3.5" /> Pause & Bank
                 </button>
-                <button onClick={() => { setRunning(false); setSeconds(0); }}
+                <button onClick={reset}
                   className="inline-flex items-center justify-center gap-2 border border-border bg-charcoal px-3 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl transition-all hover:border-pearl">
                   <RotateCcw className="h-3.5 w-3.5" /> Reset
                 </button>
               </div>
 
-              <p className="border-t border-border/60 pt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/50">
-                Rate: ${ratePerSec.toFixed(6)}/sec · based on 2,080 grind hrs/yr
-              </p>
+              <div className="grid grid-cols-3 gap-3 border-t border-border/60 pt-4 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
+                <div><p>$ / sec</p><p className="mt-1 text-pearl">${ratePerSec.toFixed(6)}</p></div>
+                <div><p>$ / min</p><p className="mt-1 text-pearl">${perMin.toFixed(4)}</p></div>
+                <div><p>$ / 8h day</p><p className="mt-1 text-pearl">${perDay.toFixed(2)}</p></div>
+              </div>
             </div>
           </div>
         </div>

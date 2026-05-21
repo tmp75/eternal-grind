@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useProfile, setProfile, removeExternalCalendar, rankFor, RANKS } from "@/lib/profile";
+import { useProfile, setProfile, removeExternalCalendar, rankFor, RANKS, clearActivityTotals } from "@/lib/profile";
 import { LESSONS } from "@/lib/academy";
-import { Calendar as CalIcon, AppleIcon, Trash2, Download, RotateCcw } from "lucide-react";
+import { Calendar as CalIcon, AppleIcon, Trash2, Download, RotateCcw, Eraser } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -60,6 +60,23 @@ function ProfilePage() {
             onChange={(e) => setProfile({ salary: Math.max(0, Number(e.target.value) || 0) })}
             className="mt-2 w-full border border-border bg-obsidian px-3 py-2 font-mono text-pearl outline-none focus:border-ink"
           />
+          <p className="mt-6 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
+            <span>Working hours / week</span><span className="text-ink">{profile.hoursPerWeek}h</span>
+          </p>
+          <input
+            type="range" min={10} max={80} step={1} value={profile.hoursPerWeek}
+            onChange={(e) => setProfile({ hoursPerWeek: Number(e.target.value) })}
+            className="mt-2 w-full accent-[var(--ink)]"
+          />
+          <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Preferred OOO rebooking band</p>
+          <div className="mt-2 flex gap-1">
+            {(["morning", "afternoon", "evening"] as const).map((b) => (
+              <button key={b} onClick={() => setProfile({ preferredBand: b })}
+                className={`flex-1 border px-2 py-2 font-mono text-[10px] uppercase tracking-[0.2em] ${
+                  profile.preferredBand === b ? "border-ink bg-ink/20 text-pearl" : "border-border bg-obsidian text-bone hover:border-pearl"
+                }`}>{b}</button>
+            ))}
+          </div>
           <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
             Grinding since {hydrated && profile.joinedAt ? new Date(profile.joinedAt).toLocaleDateString() : "—"}
           </p>
@@ -134,6 +151,9 @@ function ProfilePage() {
         <div className="md:col-span-2 flex flex-wrap gap-3">
           <button onClick={exportProfile} className="inline-flex items-center gap-2 border border-border bg-charcoal px-4 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-ink hover:text-ink">
             <Download className="h-3.5 w-3.5" /> Export profile (JSON)
+          </button>
+          <button onClick={() => { if (confirm("Clear lifetime grind totals?")) clearActivityTotals(); }} className="inline-flex items-center gap-2 border border-border bg-charcoal px-4 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-ink hover:text-ink">
+            <Eraser className="h-3.5 w-3.5" /> Clear lifetime grind
           </button>
           <button onClick={resetProfile} className="inline-flex items-center gap-2 border border-pink/50 bg-pink/10 px-4 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-pink hover:bg-pink/20">
             <RotateCcw className="h-3.5 w-3.5" /> Reset profile

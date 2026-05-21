@@ -63,15 +63,25 @@ export function Hero() {
       </div>
 
       <div className="relative z-10 px-4 text-center">
-        <motion.img
-          src={inkoMascot}
-          alt="INKO — the smug grinder"
-          initial={{ opacity: 0, y: 30, filter: "blur(20px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto mb-6 h-36 w-auto select-none drop-shadow-[0_10px_40px_rgba(123,44,255,0.55)] md:h-44"
-          draggable={false}
-        />
+        <div className="relative mx-auto mb-8 flex h-56 w-56 items-center justify-center md:h-72 md:w-72 lg:h-80 lg:w-80">
+          <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(123,44,255,0.45),transparent_65%)] blur-2xl" aria-hidden />
+          <motion.img
+            src={inkoMascot}
+            alt="INKO — the smug grinder"
+            loading="eager"
+            decoding="async"
+            initial={{ opacity: 0, y: 30, scale: 0.92, filter: "blur(20px)" }}
+            animate={{ opacity: 1, y: [0, -10, 0], scale: 1, filter: "blur(0px)" }}
+            transition={{
+              opacity: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+              scale: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+              filter: { duration: 1, ease: [0.16, 1, 0.3, 1] },
+              y: { duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "loop" },
+            }}
+            className="relative h-full w-full select-none object-contain drop-shadow-[0_20px_60px_rgba(123,44,255,0.6)]"
+            draggable={false}
+          />
+        </div>
         <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.45em] text-violet md:text-[11px]">
           The smug meme that does nothing — and somehow stays on top
         </p>

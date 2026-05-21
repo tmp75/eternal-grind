@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CircleCheck, Circle } from "lucide-react";
 import { LESSONS, LESSON_TAGS, type LessonTag, type LessonTruth } from "@/lib/academy";
 import { useProfile, toggleLesson, rankFor, RANKS } from "@/lib/profile";
@@ -142,31 +142,50 @@ function AcademyPage() {
               return (
                 <motion.article
                   key={l.n}
-                  initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+                  initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
                   whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  whileHover={{ y: -6, rotateX: 2, rotateY: -1 }}
                   viewport={{ once: true, margin: "-5%" }}
                   transition={{ delay: (i % 9) * 0.04, duration: 0.5 }}
-                  className={`group flex h-full flex-col border bg-charcoal p-6 transition-all hover:border-ink hover:shadow-[0_0_30px_color-mix(in_oklab,var(--ink)_30%,transparent)] ${done ? "border-necro/60" : "border-border"}`}
+                  style={{ transformPerspective: 800 }}
+                  className={`group relative flex h-full flex-col overflow-hidden border bg-charcoal p-6 transition-colors hover:border-ink hover:shadow-[0_20px_60px_-20px_color-mix(in_oklab,var(--ink)_55%,transparent)] ${done ? "border-necro/60" : "border-border"}`}
                 >
-                  <div className="mb-3 flex items-center justify-between">
+                  {/* sliding sheen */}
+                  <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                  <div className="relative mb-3 flex items-center justify-between">
                     <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-bone/60">Technique {String(l.n).padStart(3, "0")}</span>
                     <span className={`rounded-sm border px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.3em] ${TRUTH_STYLES[l.truth]}`}>{l.truth}</span>
                   </div>
-                  <h3 className="font-display text-2xl leading-tight text-pearl">{l.title}</h3>
-                  <p className="mt-3 flex-1 text-bone">{l.body}</p>
-                  <div className="mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] uppercase tracking-[0.3em]">
+                  <h3 className="relative font-display text-2xl leading-tight text-pearl">{l.title}</h3>
+                  <p className="relative mt-3 flex-1 text-bone">{l.body}</p>
+                  <div className="relative mt-5 flex items-center justify-between border-t border-border/60 pt-3 font-mono text-[10px] uppercase tracking-[0.3em]">
                     <span className="text-ink">#{l.tag}</span>
                     <span className="text-bone/60">{l.rank} · +{l.xp} pts</span>
                   </div>
                   <button
                     onClick={() => toggleLesson(l.n, l.xp)}
-                    className={`mt-3 inline-flex items-center justify-center gap-2 border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${
+                    className={`relative mt-3 inline-flex items-center justify-center gap-2 border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${
                       done ? "border-necro bg-necro/10 text-necro hover:bg-necro/20" : "border-border bg-obsidian text-pearl hover:border-ink hover:text-ink"
                     }`}
                   >
                     {done ? <CircleCheck className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
                     {done ? "Mastered" : "Mark as mastered"}
                   </button>
+
+                  <AnimatePresence>
+                    {done && (
+                      <motion.span
+                        initial={{ opacity: 0, scale: 0.4, rotate: -25 }}
+                        animate={{ opacity: 1, scale: 1, rotate: -8 }}
+                        exit={{ opacity: 0, scale: 0.4 }}
+                        transition={{ type: "spring", stiffness: 220, damping: 16 }}
+                        className="pointer-events-none absolute right-4 top-4 border-2 border-necro px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.3em] text-necro"
+                      >
+                        Mastered
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </motion.article>
               );
             })}

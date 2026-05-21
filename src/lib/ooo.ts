@@ -1,16 +1,16 @@
 // Shared lore + data for INKO — Eternal Grind on Inkchain.
 import {
   Briefcase, Ghost, Flame, UtensilsCrossed, Armchair, Coffee, Target, Stethoscope,
-  EyeOff, Droplet, CalendarX, Mail, MessageSquare, Swords,
+  EyeOff, Droplet, CalendarX, Mail, MessageSquare, Swords, PartyPopper,
   type LucideIcon,
 } from "lucide-react";
 
 export const INKCHAIN_URL = "https://inkonchain.com";
-export const PUMP_FUN_URL = INKCHAIN_URL; // legacy alias
+export const PUMP_FUN_URL = INKCHAIN_URL;
 export const SALARY_PER_HOUR = 28;
 export const WORK_END_HOUR = 17;
 
-// ---------- Missions (Grind Techniques) ----------
+// ---------- Missions ----------
 export type MissionId =
   | "desk-lunch" | "toilet-grind" | "coffee-grind"
   | "ghost-standup" | "deep-grind" | "sick-grind";
@@ -50,10 +50,9 @@ export const MISSIONS: Mission[] = [
 ];
 
 // ---------- Calendar ----------
-// "free" is repurposed in display as "GRIND" — the smug overlay highlight.
-// Default state of every cell is "work". Grind steps are the accent on top.
-export type BlockType = "free" | "work" | "ghost";
-export type BlockOrigin = "inko" | "ooo" | "external"; // "ooo" kept for legacy stored data
+// "free" = smug grind overlay. "ooo" = celebrated out-of-office rebooking.
+export type BlockType = "free" | "work" | "ghost" | "ooo";
+export type BlockOrigin = "inko" | "ooo" | "external";
 export interface CalendarCell {
   day: number;   // 0..4
   hour: number;  // 9..17
@@ -63,69 +62,90 @@ export interface CalendarCell {
   externalTitle?: string;
 }
 
-// Grind steps overlay (the smug highlights INKO teaches you to stack on top of work)
+// Smug grind highlights stacked on top of work. "Free Money Breaks."
 const GRIND_STEPS: { day: number; start: number; end: number; label: string }[] = [
-  { day: 0, start: 9, end: 10, label: "Smug Standup" },
+  { day: 0, start: 10, end: 11, label: "Free Money Break" },
   { day: 0, start: 13, end: 14, label: "Desk Lunch" },
   { day: 1, start: 11, end: 12, label: "Performative Email Sprint" },
   { day: 1, start: 13, end: 14, label: "Desk Lunch" },
-  { day: 2, start: 10, end: 12, label: "Calendar Theater" },
+  { day: 2, start: 10, end: 11, label: "Coffee Grind" },
   { day: 2, start: 15, end: 16, label: "Ghost Standup" },
   { day: 3, start: 13, end: 14, label: "Desk Lunch" },
   { day: 3, start: 16, end: 17, label: "Inbox Zero Cosplay" },
-  { day: 4, start: 9, end: 18, label: "Sigma Friday" },
+  { day: 4, start: 14, end: 18, label: "Sigma Friday" },
 ];
 
 export function buildDefaultWeek(): CalendarCell[] {
+  return buildSuggestedWeek({ hoursPerWeek: 40 });
+}
+
+// Suggested week: every business hour starts as "work", then we drop in smug
+// grind breaks until we're under the user's target weekly hours.
+export function buildSuggestedWeek(opts: { hoursPerWeek: number; startHour?: number }): CalendarCell[] {
+  const startHour = opts.startHour ?? 9;
   const cells: CalendarCell[] = [];
   for (let d = 0; d < 5; d++) {
-    for (let h = 9; h < 18; h++) {
+    for (let h = startHour; h < 18; h++) {
       const grind = GRIND_STEPS.find((b) => b.day === d && h >= b.start && h < b.end);
       cells.push({
         day: d, hour: h, origin: "inko",
-        type: grind ? "free" : "work", // "free" = smug grind overlay
+        type: grind ? "free" : "work",
         label: grind?.label ?? "Eternal Grind",
       });
     }
   }
+  // Trim more work cells if user wants fewer hours than 40.
+  const target = Math.max(5, Math.min(60, Math.round(opts.hoursPerWeek)));
+  const workIdx = cells
+    .map((c, i) => ({ c, i }))
+    .filter((x) => x.c.type === "work");
+  const cuts = Math.max(0, workIdx.length - target);
+  // Prefer cutting late afternoon and Friday first.
+  workIdx.sort((a, b) => (b.c.day - a.c.day) || (b.c.hour - a.c.hour));
+  for (let k = 0; k < cuts; k++) {
+    const idx = workIdx[k].i;
+    cells[idx] = { ...cells[idx], type: "free", label: "Free Money Break" };
+  }
   return cells;
 }
 
-// Icon for cell type
+// Return first N grind slots for a preferred time-of-day band.
+export function suggestRebookSlots(
+  cells: CalendarCell[],
+  band: "morning" | "afternoon" | "evening",
+  count = 3,
+): CalendarCell[] {
+  const range = band === "morning" ? [9, 12] : band === "afternoon" ? [12, 16] : [16, 18];
+  return cells
+    .filter((c) => c.origin !== "external" && c.type === "free" && c.hour >= range[0] && c.hour < range[1])
+    .slice(0, count);
+}
+
 export const CELL_ICON: Record<BlockType, LucideIcon> = {
-  free: Flame,    // grind overlay
+  free: Flame,
   work: Briefcase,
   ghost: Ghost,
+  ooo: PartyPopper,
 };
 
-// Display labels (BlockType -> user-facing)
 export const CELL_LABEL: Record<BlockType, string> = {
   free: "Grind",
   work: "Work",
   ghost: "Ghost",
+  ooo: "OOO",
 };
 
 // ---------- Tickers ----------
 export const TICKER_TOP = [
-  "INKO ETERNAL GRIND",
-  "ALWAYS ON",
-  "NEVER LOG OFF",
+  "INKO ETERNAL GRIND", "ALWAYS ON", "NEVER LOG OFF",
   "THE SMUG MEME THAT DOES NOTHING AND STAYS ON TOP",
-  "$INKO",
-  "AUTO-REPLY: IN DEEP GRIND",
-  "INKCHAIN · 1B SUPPLY",
+  "$INKO", "AUTO-REPLY: IN DEEP GRIND", "INKCHAIN · 1B SUPPLY",
 ];
 export const TICKER_BOT = [
-  "SMUG STANDUP",
-  "SIGMA FRIDAY",
-  "COFFEE GRIND",
-  "GREEN DOT THEATER",
-  "THE COSTANZA GRIND",
-  "REPLY-ALL SIGMA HOUR",
-  "GRIND BELL @ 09:00",
+  "SMUG STANDUP", "SIGMA FRIDAY", "COFFEE GRIND", "GREEN DOT THEATER",
+  "THE COSTANZA GRIND", "REPLY-ALL SIGMA HOUR", "GRIND BELL @ 09:00",
 ];
 
-// ---------- Tactics ----------
 export interface Tactic { tag: string; title: string; body: string; icon: LucideIcon; }
 export const TACTICS: Tactic[] = [
   { tag: "POSTURE", icon: EyeOff, title: "The Costanza Grind", body: "Furrow brow. Mutter at monitor. Carry a clipboard. Look perpetually mid-pivot. Promotion incoming." },
@@ -136,11 +156,9 @@ export const TACTICS: Tactic[] = [
   { tag: "SIGMA", icon: Swords, title: "Reply-All Sigma Hour (Fri 4:58 PM)", body: "Send \"Looping back Monday.\" Close laptop. INKO smiles upon you." },
 ];
 
-// ---------- Trigger events ----------
 export const TRIGGER_EVENTS = [
   { time: "09:00", label: "GRIND BELL", note: "Markets open. Look at the screen with conviction. Do nothing." },
   { time: "13:00", label: "Desk Lunch", note: "Chew at your station. Crumbs are evidence of grind." },
   { time: "16:59", label: "SIGMA OVERRIDE", note: "Sigma Hour imminent. Reply-all and disappear." },
 ];
-// Droplet kept exported for potential future use
 export const _unused = Droplet;

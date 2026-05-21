@@ -17,15 +17,21 @@ export interface ExternalEvent {
   end: number;
 }
 
+export type ActivityId =
+  | "toilet" | "coffee" | "smoke" | "lunch" | "busy" | "nod";
+
 export interface Profile {
   handle: string;
   joinedAt: number;
   salary: number;
+  hoursPerWeek: number;
   xp: number;
   completedLessons: number[];
-  calendar: CalendarCell[] | null; // null = use default
+  calendar: CalendarCell[] | null; // null = use suggested
   externalCalendars: ExternalCalendar[];
   externalEvents: ExternalEvent[];
+  activityTotals: Record<ActivityId, number>; // seconds
+  preferredBand: "morning" | "afternoon" | "evening";
 }
 
 export const RANKS = [
@@ -39,15 +45,22 @@ export const RANKS = [
 
 const KEY = "inko.profile.v1";
 
+const DEFAULT_TOTALS: Record<ActivityId, number> = {
+  toilet: 0, coffee: 0, smoke: 0, lunch: 0, busy: 0, nod: 0,
+};
+
 const DEFAULT_PROFILE: Profile = {
   handle: "Anonymous Grinder",
-  joinedAt: 0, // hydrated on first load
-  salary: 60_000,
+  joinedAt: 0,
+  salary: 100_000,
+  hoursPerWeek: 40,
   xp: 0,
   completedLessons: [],
   calendar: null,
   externalCalendars: [],
   externalEvents: [],
+  activityTotals: DEFAULT_TOTALS,
+  preferredBand: "afternoon",
 };
 
 function read(): Profile {
@@ -56,7 +69,11 @@ function read(): Profile {
     const raw = localStorage.getItem(KEY);
     if (!raw) return DEFAULT_PROFILE;
     const parsed = JSON.parse(raw);
-    return { ...DEFAULT_PROFILE, ...parsed };
+    return {
+      ...DEFAULT_PROFILE,
+      ...parsed,
+      activityTotals: { ...DEFAULT_TOTALS, ...(parsed.activityTotals ?? {}) },
+    };
   } catch {
     return DEFAULT_PROFILE;
   }
@@ -67,7 +84,6 @@ function write(p: Profile) {
   try { localStorage.setItem(KEY, JSON.stringify(p)); } catch {}
 }
 
-// pub-sub
 type Listener = (p: Profile) => void;
 const listeners = new Set<Listener>();
 function emit(p: Profile) { listeners.forEach((l) => l(p)); }
@@ -120,6 +136,17 @@ export function toggleLesson(n: number, xp: number) {
     const newXp = Math.max(0, p.xp + (has ? -xp : xp));
     return { completedLessons, xp: newXp };
   });
+}
+
+export function addActivitySeconds(id: ActivityId, seconds: number) {
+  if (seconds <= 0) return;
+  setProfile((p) => ({
+    activityTotals: { ...p.activityTotals, [id]: (p.activityTotals[id] ?? 0) + seconds },
+  }));
+}
+
+export function clearActivityTotals() {
+  setProfile({ activityTotals: { ...DEFAULT_TOTALS } });
 }
 
 export function addExternalCalendar(c: Omit<ExternalCalendar, "id" | "lastSync">) {
