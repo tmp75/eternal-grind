@@ -3,10 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import {
-  Flame, Briefcase, Ghost, Lock, RefreshCw, Trash2,
-  Calendar as CalIcon, AppleIcon, Plus, Play, X, ExternalLink,
+  Flame, Briefcase, Ghost, Lock, RefreshCw, Trash2, PartyPopper,
+  Calendar as CalIcon, AppleIcon, Plus, Play, X, Check, ArrowRight, ArrowLeft, Copy, Sparkles,
 } from "lucide-react";
-import { buildDefaultWeek, TRIGGER_EVENTS, type BlockType, type CalendarCell } from "@/lib/ooo";
+import {
+  buildSuggestedWeek, suggestRebookSlots, TRIGGER_EVENTS,
+  type BlockType, type CalendarCell,
+} from "@/lib/ooo";
 import { useProfile, setProfile, addExternalCalendar, removeExternalCalendar, replaceExternalEvents } from "@/lib/profile";
 import { fetchIcs, IcsError } from "@/lib/ical";
 
@@ -14,9 +17,9 @@ export const Route = createFileRoute("/calendar")({
   head: () => ({
     meta: [
       { title: "Grind Calendar — $INKO" },
-      { name: "description", content: "Connect Google or Apple Calendar. Default state: grinding. Stack smug grind steps on top of your work. Reset never touches real meetings." },
+      { name: "description", content: "Read your Google or Apple calendar, auto-suggest smug breaks, and reschedule what you couldn't do. Real meetings stay untouched." },
       { property: "og:title", content: "Grind Calendar — $INKO" },
-      { property: "og:description", content: "The grind is the default. Edit your week. Reset keeps real bookings safe." },
+      { property: "og:description", content: "Salary-driven default week. Celebrate OOO. Real bookings stay safe." },
     ],
   }),
   component: CalendarPage,
@@ -24,29 +27,33 @@ export const Route = createFileRoute("/calendar")({
 
 const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
 const HOURS = Array.from({ length: 9 }, (_, i) => i + 9);
-// Cycle: pure work → smug grind → ghost
-const CYCLE: BlockType[] = ["work", "free", "ghost"];
+const CYCLE: BlockType[] = ["work", "free", "ghost", "ooo"];
 function nextType(t: BlockType): BlockType { return CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]; }
 function key(d: number, h: number) { return `${d}-${h}`; }
 
 const ICON_FOR: Record<BlockType, typeof Flame> = {
-  free: Flame, work: Briefcase, ghost: Ghost,
+  free: Flame, work: Briefcase, ghost: Ghost, ooo: PartyPopper,
 };
-const LABEL_FOR: Record<BlockType, string> = { free: "Grind", work: "Work", ghost: "Ghost" };
-const isInkoOrigin = (o?: string) => o === "inko" || o === "ooo" || !o;
+const LABEL_FOR: Record<BlockType, string> = { free: "Grind", work: "Work", ghost: "Ghost", ooo: "OOO" };
 
 function CalendarPage() {
   const [profile, hydrated] = useProfile();
-  const [cells, setCells] = useState<CalendarCell[]>(() => buildDefaultWeek());
+  const [cells, setCells] = useState<CalendarCell[]>(() => buildSuggestedWeek({ hoursPerWeek: 40 }));
   const [drag, setDrag] = useState<{ start: string; type: BlockType } | null>(null);
   const [hover, setHover] = useState<Set<string>>(new Set());
   const [trigger, setTrigger] = useState<typeof TRIGGER_EVENTS[number] | null>(null);
-  const [connectOpen, setConnectOpen] = useState<null | "google" | "apple">(null);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [oooOpen, setOooOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
+  // Hydrate from profile, or build suggested from salary + hours.
   useEffect(() => {
     if (!hydrated) return;
-    if (profile.calendar && profile.calendar.length) setCells(profile.calendar);
+    if (profile.calendar && profile.calendar.length) {
+      setCells(profile.calendar);
+    } else {
+      setCells(buildSuggestedWeek({ hoursPerWeek: profile.hoursPerWeek || 40 }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
 
@@ -57,6 +64,7 @@ function CalendarPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cells, hydrated]);
 
+  // Overlay external events.
   useEffect(() => {
     if (!hydrated) return;
     setCells((prev) => {
@@ -90,16 +98,19 @@ function CalendarPage() {
   }, [profile.externalEvents, hydrated]);
 
   const counts = useMemo(() => {
-    let grind = 0, work = 0, ghost = 0, booked = 0;
+    let grind = 0, work = 0, ghost = 0, booked = 0, ooo = 0;
     for (const c of cells) {
       if (c.origin === "external") booked++;
       else if (c.type === "free") grind++;
       else if (c.type === "work") work++;
-      else ghost++;
+      else if (c.type === "ghost") ghost++;
+      else ooo++;
     }
-    return { grind, work, ghost, booked };
+    return { grind, work, ghost, booked, ooo };
   }, [cells]);
-  const ratio = counts.work + counts.booked === 0 ? "∞ : 0" : `${(counts.grind / (counts.work + counts.booked)).toFixed(2)} : 1`;
+
+  const ratePerSec = profile.salary / ((profile.hoursPerWeek || 40) * 52 * 3600);
+  const freeMoneyPerHour = ratePerSec * 3600;
 
   function setCell(d: number, h: number, type: BlockType, label?: string) {
     setCells((prev) => prev.map((c) =>
@@ -143,9 +154,9 @@ function CalendarPage() {
     { name: "Desk Lunch (12–14)", apply: () => setBulk((c) => c.hour === 12 || c.hour === 13, "free", "Desk Lunch") },
     { name: "Cancel in My Head", apply: () => setBulk((c) => c.type === "work" && c.origin !== "external", "ghost", "Cancelled (mentally)") },
     {
-      name: "Reset INKO steps",
+      name: "Reset to suggested week",
       apply: () => {
-        const fresh = buildDefaultWeek();
+        const fresh = buildSuggestedWeek({ hoursPerWeek: profile.hoursPerWeek || 40 });
         setCells((prev) => {
           const externals = prev.filter((c) => c.origin === "external");
           const map = new Map<string, CalendarCell>();
@@ -153,7 +164,7 @@ function CalendarPage() {
           for (const c of externals) map.set(key(c.day, c.hour), c);
           return Array.from(map.values()).sort((a, b) => a.day - b.day || a.hour - b.hour);
         });
-        toast("INKO steps reset", { description: "Your real bookings stay put." });
+        toast("Week reset", { description: "Your real bookings stay put." });
       },
     },
   ];
@@ -168,11 +179,21 @@ function CalendarPage() {
       toast.error(err.message || "Sync failed");
     }
   }
-  async function handleConnect(provider: "google" | "apple", name: string, url: string) {
-    if (!url.trim()) return;
-    const id = addExternalCalendar({ provider, name: name || (provider === "google" ? "Google Calendar" : "Apple Calendar"), url });
-    setConnectOpen(null);
+  async function handleConnect(provider: "google" | "apple" | "ics", name: string, url: string) {
+    const id = addExternalCalendar({ provider, name, url });
+    setConnectOpen(false);
     await refreshExternal(id, url);
+  }
+
+  function rebookTask(title: string, durationHours: number) {
+    const slots = suggestRebookSlots(cells, profile.preferredBand, durationHours);
+    if (slots.length === 0) {
+      toast.error("No matching free slots — try a different time-of-day band in your profile.");
+      return;
+    }
+    for (const s of slots) setCell(s.day, s.hour, "ooo", `OOO · ${title}`);
+    setOooOpen(false);
+    toast.success(`Rebooked '${title}' into ${slots.length} ${profile.preferredBand} slot(s)`);
   }
 
   return (
@@ -185,24 +206,43 @@ function CalendarPage() {
             The Grind<br /><em>Calendar.</em>
           </h1>
           <p className="mt-8 max-w-2xl font-display text-xl italic text-bone md:text-2xl">
-            Default state: grinding. Stack smug grind steps on top of your work. Reset never touches a real meeting.
+            Built from your salary and hours. INKO suggests breaks that earn you free money,
+            and celebrates every OOO by rebooking it on your terms.
           </p>
         </div>
       </section>
 
       <section className="mx-auto max-w-[1400px] px-6 py-12 md:px-12">
+        {/* Free money banner */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border border-ink/40 bg-ink/5 px-5 py-4">
+          <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.3em] text-pearl">
+            <Sparkles className="h-4 w-4 text-ink" />
+            Free money rate: <span className="text-necro">${freeMoneyPerHour.toFixed(2)} / break hour</span>
+            <span className="text-bone/50">· {counts.grind} grind breaks scheduled this week</span>
+          </p>
+          <button
+            onClick={() => setOooOpen(true)}
+            className="inline-flex items-center gap-2 border border-ink bg-ink/20 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-ink/30"
+          >
+            <PartyPopper className="h-3.5 w-3.5" /> Celebrate OOO
+          </button>
+        </div>
+
+        {/* Calendar connections */}
         <div className="mb-8 border border-border bg-charcoal">
           <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
             <span className="flex items-center gap-2"><CalIcon className="h-3.5 w-3.5 text-ink" /> Connected calendars</span>
             <Link to="/profile" className="text-ink hover:underline">manage profile →</Link>
           </div>
-          <div className="grid gap-3 p-5 md:grid-cols-2">
-            <button onClick={() => setConnectOpen("google")} className="flex items-center justify-between border border-border bg-obsidian px-4 py-4 text-left transition-all hover:border-ink">
-              <span className="flex items-center gap-3"><CalIcon className="h-5 w-5 text-ink" /><span className="font-mono text-xs uppercase tracking-[0.3em] text-pearl">Connect Google Calendar</span></span>
-              <Plus className="h-4 w-4 text-bone/60" />
-            </button>
-            <button onClick={() => setConnectOpen("apple")} className="flex items-center justify-between border border-border bg-obsidian px-4 py-4 text-left transition-all hover:border-ink">
-              <span className="flex items-center gap-3"><AppleIcon className="h-5 w-5 text-ink" /><span className="font-mono text-xs uppercase tracking-[0.3em] text-pearl">Connect Apple Calendar</span></span>
+          <div className="p-5">
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.3em] text-violet">
+              Read-only. We never touch your real meetings.
+            </p>
+            <button onClick={() => setConnectOpen(true)} className="flex w-full items-center justify-between border border-border bg-obsidian px-4 py-4 text-left transition-all hover:border-ink">
+              <span className="flex items-center gap-3">
+                <CalIcon className="h-5 w-5 text-ink" /><AppleIcon className="h-5 w-5 text-ink" />
+                <span className="font-mono text-xs uppercase tracking-[0.3em] text-pearl">Connect Google or Apple Calendar</span>
+              </span>
               <Plus className="h-4 w-4 text-bone/60" />
             </button>
           </div>
@@ -230,26 +270,11 @@ function CalendarPage() {
         </div>
 
         <div className="mb-6 grid gap-3 md:grid-cols-5">
-          <div className="border border-ink/40 bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Grind hours</p>
-            <p className="mt-1 font-display text-3xl text-ink">{counts.grind}</p>
-          </div>
-          <div className="border border-border bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Pure work</p>
-            <p className="mt-1 font-display text-3xl text-pearl">{counts.work}</p>
-          </div>
-          <div className="border border-border bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Ghost meetings</p>
-            <p className="mt-1 font-display text-3xl text-violet">{counts.ghost}</p>
-          </div>
-          <div className="border border-border bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Real bookings</p>
-            <p className="mt-1 font-display text-3xl text-bone">{counts.booked}</p>
-          </div>
-          <div className="border border-ink/40 bg-charcoal p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">Grind ratio</p>
-            <p className="mt-1 font-display text-3xl text-necro">{ratio}</p>
-          </div>
+          <Stat label="Grind hours" v={counts.grind} tone="ink" />
+          <Stat label="Pure work" v={counts.work} tone="pearl" />
+          <Stat label="Ghost meetings" v={counts.ghost} tone="violet" />
+          <Stat label="OOO rebooked" v={counts.ooo} tone="necro" />
+          <Stat label="Real bookings" v={counts.booked} tone="bone" />
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2">
@@ -280,9 +305,11 @@ function CalendarPage() {
                   ? "bg-bone/10 cursor-not-allowed"
                   : cell.type === "free" ? "bg-ink/25 hover:bg-ink/35"
                   : cell.type === "work" ? "bg-bone/5 hover:bg-bone/10"
+                  : cell.type === "ooo" ? "bg-necro/20 hover:bg-necro/30"
                   : "bg-violet/15 hover:bg-violet/25";
                 const labelTone = external ? "text-bone/70"
                   : cell.type === "free" ? "text-ink"
+                  : cell.type === "ooo" ? "text-necro"
                   : cell.type === "ghost" ? "text-violet" : "text-bone/60";
                 return (
                   <button
@@ -304,7 +331,7 @@ function CalendarPage() {
         </div>
 
         <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">
-          Click to cycle: Work → Grind → Ghost. Drag to bulk-mark. Locked cells are real bookings (read-only).
+          Click to cycle: Work → Grind → Ghost → OOO. Drag to bulk-mark. Locked cells are real bookings (read-only).
         </p>
 
         <div className="mt-16">
@@ -327,7 +354,19 @@ function CalendarPage() {
 
       <AnimatePresence>
         {connectOpen && (
-          <ConnectModal kind={connectOpen} onClose={() => setConnectOpen(null)} onSubmit={(name, url) => handleConnect(connectOpen, name, url)} />
+          <ConnectStepper onClose={() => setConnectOpen(false)} onSubmit={handleConnect} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {oooOpen && (
+          <OOOModal
+            externalTitles={Array.from(new Set(profile.externalEvents.map((e) => e.title))).slice(0, 8)}
+            band={profile.preferredBand}
+            onBand={(b) => setProfile({ preferredBand: b })}
+            onClose={() => setOooOpen(false)}
+            onRebook={rebookTask}
+          />
         )}
       </AnimatePresence>
 
@@ -356,12 +395,49 @@ function CalendarPage() {
   );
 }
 
-function ConnectModal({
-  kind, onClose, onSubmit,
-}: { kind: "google" | "apple"; onClose: () => void; onSubmit: (name: string, url: string) => void }) {
-  const [name, setName] = useState(kind === "google" ? "Google Calendar" : "Apple Calendar");
+function Stat({ label, v, tone }: { label: string; v: number; tone: "ink" | "pearl" | "violet" | "necro" | "bone" }) {
+  const t = { ink: "text-ink", pearl: "text-pearl", violet: "text-violet", necro: "text-necro", bone: "text-bone" }[tone];
+  const border = tone === "ink" || tone === "necro" ? "border-ink/40" : "border-border";
+  return (
+    <div className={`border ${border} bg-charcoal p-4`}>
+      <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone/60">{label}</p>
+      <p className={`mt-1 font-display text-3xl ${t}`}>{v}</p>
+    </div>
+  );
+}
+
+// ---------------- Stepper modal ----------------
+function ConnectStepper({
+  onClose, onSubmit,
+}: { onClose: () => void; onSubmit: (provider: "google" | "apple" | "ics", name: string, url: string) => Promise<void> }) {
+  const [step, setStep] = useState(1);
+  const [provider, setProvider] = useState<"google" | "apple" | "ics">("google");
   const [url, setUrl] = useState("");
-  const isApple = kind === "apple";
+  const [name, setName] = useState("Google Calendar");
+  const [testing, setTesting] = useState(false);
+  const [tested, setTested] = useState<{ ok: boolean; count?: number; msg?: string } | null>(null);
+
+  function choose(p: "google" | "apple" | "ics") {
+    setProvider(p);
+    setName(p === "apple" ? "Apple Calendar" : p === "google" ? "Google Calendar" : "My Calendar");
+    setStep(2);
+    setTested(null);
+  }
+  async function testConnection() {
+    setTesting(true); setTested(null);
+    try {
+      const events = await fetchIcs(url);
+      setTested({ ok: true, count: events.length });
+    } catch (e) {
+      const err = e as IcsError;
+      setTested({ ok: false, msg: err.message || "Failed" });
+    } finally { setTesting(false); }
+  }
+  async function loadDemo() {
+    const demo = "https://calendar.google.com/calendar/ical/en.usa%23holiday%40group.v.calendar.google.com/public/basic.ics";
+    setUrl(demo); setName("US Holidays (demo)"); setProvider("ics");
+    setTested(null);
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -369,57 +445,198 @@ function ConnectModal({
       <motion.div
         initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-xl border border-ink bg-charcoal shadow-[0_30px_120px_-20px_var(--ink)]"
+        className="w-full max-w-2xl border border-ink bg-charcoal shadow-[0_30px_120px_-20px_var(--ink)]"
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
-          <span className="flex items-center gap-2">
-            {isApple ? <AppleIcon className="h-4 w-4 text-ink" /> : <CalIcon className="h-4 w-4 text-ink" />}
-            Connect {isApple ? "Apple" : "Google"} Calendar
-          </span>
+          <span>Connect a calendar · step {step} of 3</span>
           <button onClick={onClose}><X className="h-4 w-4 text-bone/70 hover:text-pearl" /></button>
         </div>
 
+        <div className="flex gap-1 px-5 pt-4">
+          {[1, 2, 3].map((s) => (
+            <div key={s} className={`h-1 flex-1 ${s <= step ? "bg-ink" : "bg-border"}`} />
+          ))}
+        </div>
+
         <div className="space-y-5 p-6">
-          <div className="border border-border bg-obsidian p-4 text-sm text-bone">
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-ink mb-2">How to get your link</p>
-            {isApple ? (
-              <ol className="list-decimal pl-5 space-y-1">
-                <li>Open Calendar on Mac → right-click your calendar → <em>Share Calendar</em>.</li>
-                <li>Check <em>Public Calendar</em>. Copy the <code>webcal://</code> URL.</li>
-                <li>Paste it below. We’ll auto-convert <code>webcal://</code> to <code>https://</code>.</li>
+          {step === 1 && (
+            <>
+              <p className="font-display text-2xl text-pearl">Which calendar?</p>
+              <div className="grid gap-3 md:grid-cols-3">
+                <ProviderCard label="Google" icon={CalIcon} onClick={() => choose("google")} />
+                <ProviderCard label="Apple iCloud" icon={AppleIcon} onClick={() => choose("apple")} />
+                <ProviderCard label="Other (ICS)" icon={CalIcon} onClick={() => choose("ics")} />
+              </div>
+              <button onClick={loadDemo} className="mt-2 inline-flex items-center gap-2 border border-border bg-obsidian px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-ink">
+                <Sparkles className="h-3 w-3" /> Try with a demo calendar
+              </button>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <p className="font-display text-2xl text-pearl">Grab your calendar link</p>
+              <ol className="list-decimal space-y-3 pl-5 text-sm text-bone">
+                {provider === "google" && <>
+                  <li>Open <a className="text-ink underline" href="https://calendar.google.com/calendar/u/0/r/settings" target="_blank" rel="noreferrer">Google Calendar Settings</a>.</li>
+                  <li>Click the calendar you want under "Settings for my calendars".</li>
+                  <li>Scroll to <em>Integrate calendar</em> → copy the <em>Secret address in iCal format</em>.</li>
+                  <li className="text-bone/60">(Public address works too if your calendar is shared publicly.)</li>
+                </>}
+                {provider === "apple" && <>
+                  <li>Open Calendar on Mac. Right-click the calendar → <em>Share Calendar</em>.</li>
+                  <li>Check <em>Public Calendar</em>, then click <em>Share Link</em> and copy the <code className="text-ink">webcal://</code> URL.</li>
+                  <li>Paste below — we'll convert it to <code className="text-ink">https://</code> automatically.</li>
+                </>}
+                {provider === "ics" && <>
+                  <li>Locate any public ICS/iCal feed from your calendar provider.</li>
+                  <li>Copy the full URL (it usually ends with <code className="text-ink">.ics</code>).</li>
+                </>}
               </ol>
-            ) : (
-              <ol className="list-decimal pl-5 space-y-1">
-                <li>Open Google Calendar → Settings → click your calendar.</li>
-                <li>Scroll to <em>Integrate calendar</em> → copy <em>Public address in iCal format</em>.</li>
-                <li>(For private calendars use <em>Secret address in iCal format</em> — keep it private.)</li>
-              </ol>
+              <div className="flex justify-between gap-3">
+                <button onClick={() => setStep(1)} className="inline-flex items-center gap-2 border border-border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-pearl">
+                  <ArrowLeft className="h-3 w-3" /> Back
+                </button>
+                <button onClick={() => setStep(3)} className="inline-flex items-center gap-2 border border-ink bg-ink/30 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-ink/50">
+                  I have the link <ArrowRight className="h-3 w-3" />
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 3 && (
+            <>
+              <p className="font-display text-2xl text-pearl">Paste & test</p>
+              <div>
+                <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Display name</label>
+                <input value={name} onChange={(e) => setName(e.target.value)}
+                  className="w-full border border-border bg-obsidian px-3 py-3 font-mono text-sm text-pearl outline-none focus:border-ink" />
+              </div>
+              <div>
+                <label className="mb-2 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
+                  <span>Calendar URL</span>
+                  {url && <button onClick={() => navigator.clipboard?.writeText(url)} className="text-ink hover:underline inline-flex items-center gap-1"><Copy className="h-3 w-3" /> copy</button>}
+                </label>
+                <input value={url} onChange={(e) => { setUrl(e.target.value); setTested(null); }}
+                  placeholder={provider === "apple" ? "webcal://p01-caldav.icloud.com/..." : "https://calendar.google.com/calendar/ical/.../basic.ics"}
+                  className="w-full border border-border bg-obsidian px-3 py-3 font-mono text-sm text-pearl outline-none focus:border-ink" />
+              </div>
+
+              {tested && (
+                <div className={`border p-3 font-mono text-[10px] uppercase tracking-[0.3em] ${
+                  tested.ok ? "border-necro/50 bg-necro/10 text-necro" : "border-pink/50 bg-pink/10 text-pink"
+                }`}>
+                  {tested.ok
+                    ? <span className="inline-flex items-center gap-2"><Check className="h-3 w-3" /> Found {tested.count} events — ready to connect</span>
+                    : <span>Test failed: {tested.msg}</span>}
+                </div>
+              )}
+
+              <div className="flex justify-between gap-3">
+                <button onClick={() => setStep(2)} className="inline-flex items-center gap-2 border border-border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-pearl">
+                  <ArrowLeft className="h-3 w-3" /> Back
+                </button>
+                <div className="flex gap-2">
+                  <button onClick={testConnection} disabled={!url.trim() || testing}
+                    className="inline-flex items-center gap-2 border border-border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-ink disabled:opacity-40">
+                    {testing ? "Testing…" : "Test connection"}
+                  </button>
+                  <button onClick={() => onSubmit(provider, name, url)} disabled={!url.trim()}
+                    className="inline-flex items-center gap-2 border border-ink bg-ink/30 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-ink/50 disabled:opacity-40">
+                    <Check className="h-3 w-3" /> Connect
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function ProviderCard({ label, icon: Icon, onClick }: { label: string; icon: typeof CalIcon; onClick: () => void }) {
+  return (
+    <button onClick={onClick}
+      className="group flex flex-col items-center gap-3 border border-border bg-obsidian p-6 text-center transition-all hover:border-ink hover:bg-ink/5">
+      <Icon className="h-8 w-8 text-ink" />
+      <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-pearl">{label}</span>
+    </button>
+  );
+}
+
+// ---------------- OOO modal ----------------
+function OOOModal({
+  externalTitles, band, onBand, onClose, onRebook,
+}: {
+  externalTitles: string[];
+  band: "morning" | "afternoon" | "evening";
+  onBand: (b: "morning" | "afternoon" | "evening") => void;
+  onClose: () => void;
+  onRebook: (title: string, hours: number) => void;
+}) {
+  const [title, setTitle] = useState(externalTitles[0] ?? "");
+  const [hours, setHours] = useState(1);
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[95] grid place-items-center bg-obsidian/95 p-6 backdrop-blur-xl">
+      <motion.div
+        initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ opacity: 0 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-xl border border-necro bg-charcoal shadow-[0_30px_120px_-20px_var(--necro)]"
+      >
+        <div className="flex items-center justify-between border-b border-border px-5 py-3 font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">
+          <span className="flex items-center gap-2"><PartyPopper className="h-4 w-4 text-necro" /> Celebrate OOO · Rebook</span>
+          <button onClick={onClose}><X className="h-4 w-4 text-bone/70 hover:text-pearl" /></button>
+        </div>
+        <div className="space-y-5 p-6">
+          <p className="text-sm text-bone">
+            Out of office today? Pick the task you couldn't get to and INKO will reschedule it
+            inside your preferred grind band.
+          </p>
+          <div>
+            <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Task / meeting</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Quarterly review prep"
+              className="w-full border border-border bg-obsidian px-3 py-3 font-mono text-sm text-pearl outline-none focus:border-ink" />
+            {externalTitles.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {externalTitles.map((t) => (
+                  <button key={t} onClick={() => setTitle(t)} className="border border-border bg-obsidian px-2 py-1 font-mono text-[10px] text-bone hover:border-ink hover:text-pearl">
+                    {t}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-
-          <div>
-            <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Display name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full border border-border bg-obsidian px-3 py-3 font-mono text-sm text-pearl outline-none focus:border-ink" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Duration</label>
+              <select value={hours} onChange={(e) => setHours(Number(e.target.value))}
+                className="w-full border border-border bg-obsidian px-3 py-3 font-mono text-sm text-pearl outline-none focus:border-ink">
+                <option value={1}>1 hour</option>
+                <option value={2}>2 hours</option>
+                <option value={3}>3 hours</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">Preferred band</label>
+              <div className="flex gap-1">
+                {(["morning", "afternoon", "evening"] as const).map((b) => (
+                  <button key={b} onClick={() => onBand(b)}
+                    className={`flex-1 border px-2 py-3 font-mono text-[10px] uppercase tracking-[0.2em] ${
+                      band === b ? "border-ink bg-ink/20 text-pearl" : "border-border bg-obsidian text-bone hover:border-pearl"
+                    }`}>{b}</button>
+                ))}
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="mb-2 block font-mono text-[10px] uppercase tracking-[0.3em] text-bone/70">ICS URL</label>
-            <input value={url} onChange={(e) => setUrl(e.target.value)}
-              placeholder={isApple ? "webcal://p01-caldav.icloud.com/..." : "https://calendar.google.com/calendar/ical/.../basic.ics"}
-              className="w-full border border-border bg-obsidian px-3 py-3 font-mono text-sm text-pearl outline-none focus:border-ink" />
-          </div>
-
-          <div className="border border-violet/40 bg-violet/10 p-3 font-mono text-[10px] uppercase tracking-[0.25em] text-violet">
-            <span className="flex items-center gap-2"><ExternalLink className="h-3 w-3" />
-              Two-way sync (writing INKO steps back) requires Lovable Cloud + OAuth — coming soon.
-            </span>
-          </div>
-
           <div className="flex justify-end gap-3">
             <button onClick={onClose} className="border border-border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:border-pearl">Cancel</button>
-            <button onClick={() => onSubmit(name, url)} disabled={!url.trim()}
-              className="border border-ink bg-ink/30 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-ink/50 disabled:opacity-40">
-              Connect & sync
+            <button onClick={() => onRebook(title.trim() || "OOO Task", hours)} disabled={!title.trim()}
+              className="inline-flex items-center gap-2 border border-necro bg-necro/30 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.3em] text-pearl hover:bg-necro/50 disabled:opacity-40">
+              <Check className="h-3 w-3" /> Rebook to {band}
             </button>
           </div>
         </div>
