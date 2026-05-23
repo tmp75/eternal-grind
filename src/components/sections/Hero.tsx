@@ -62,23 +62,26 @@ export function Hero() {
         <span className="text-bone/50">GRIND BELL @ 09:00</span>
       </div>
 
-      <div className="relative z-10 px-4 text-center">
-        <div className="relative mx-auto mb-8 flex h-56 w-56 items-center justify-center md:h-72 md:w-72 lg:h-80 lg:w-80">
-          <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(123,44,255,0.45),transparent_65%)] blur-2xl" aria-hidden />
+      <div className="relative z-10 flex flex-col items-center px-4 text-center">
+        <div className="relative mx-auto mb-6 flex h-72 w-72 items-center justify-center md:h-96 md:w-96 lg:h-[28rem] lg:w-[28rem]">
+          {/* Outer glow halo */}
+          <div className="pointer-events-none absolute -inset-8 rounded-full bg-[radial-gradient(circle_at_center,rgba(123,44,255,0.35),transparent_70%)] blur-3xl" aria-hidden />
+          {/* Inner bright glow */}
+          <div className="pointer-events-none absolute -inset-4 rounded-full bg-[radial-gradient(circle_at_center,rgba(181,123,255,0.25),transparent_60%)] blur-2xl" aria-hidden />
           <motion.img
             src={inkoMascot}
             alt="INKO — the smug grinder"
             loading="eager"
             decoding="async"
             initial={{ opacity: 0, y: 30, scale: 0.92, filter: "blur(20px)" }}
-            animate={{ opacity: 1, y: [0, -10, 0], scale: 1, filter: "blur(0px)" }}
+            animate={{ opacity: 1, y: [0, -12, 0], scale: 1, filter: "blur(0px)" }}
             transition={{
               opacity: { duration: 1, ease: [0.16, 1, 0.3, 1] },
               scale: { duration: 1, ease: [0.16, 1, 0.3, 1] },
               filter: { duration: 1, ease: [0.16, 1, 0.3, 1] },
               y: { duration: 5, ease: "easeInOut", repeat: Infinity, repeatType: "loop" },
             }}
-            className="relative h-full w-full select-none object-contain drop-shadow-[0_20px_60px_rgba(123,44,255,0.6)]"
+            className="relative h-full w-full max-w-full select-none object-contain drop-shadow-[0_24px_80px_rgba(123,44,255,0.55)]"
             draggable={false}
           />
         </div>
