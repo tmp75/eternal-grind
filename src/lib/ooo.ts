@@ -7,6 +7,8 @@ import {
 
 export const INKCHAIN_URL = "https://inkonchain.com";
 export const PUMP_FUN_URL = INKCHAIN_URL;
+export const INKO_CA = "0x767F1e9feDfF2BFA4f90a7EFFddfCCc2970530Ba";
+export const INKO_COMMUNITY_URL = "https://inkypump.com/join/INKO";
 export const SALARY_PER_HOUR = 28;
 export const WORK_END_HOUR = 17;
 
