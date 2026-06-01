@@ -41,8 +41,12 @@ const LABEL_FOR: Record<BlockType, string> = { free: "Grind", work: "Work", ghos
 function CalendarPage() {
   const [profile, hydrated] = useProfile();
   const [cells, setCells] = useState<CalendarCell[]>(() => buildSuggestedWeek({ hoursPerWeek: 40 }));
-  const [drag, setDrag] = useState<{ start: string; type: BlockType } | null>(null);
-  const [hover, setHover] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [lastClicked, setLastClicked] = useState<string | null>(null);
+  const [drag, setDrag] = useState<{ mode: "add" | "remove" } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ day: number; hour: number; x: number; y: number } | null>(null);
+  const [rowMenuHour, setRowMenuHour] = useState<number | null>(null);
+  const [colMenuDay, setColMenuDay] = useState<number | null>(null);
   const [trigger, setTrigger] = useState<typeof TRIGGER_EVENTS[number] | null>(null);
   const [connectOpen, setConnectOpen] = useState(false);
   const [oooOpen, setOooOpen] = useState(false);
@@ -114,6 +118,71 @@ function CalendarPage() {
   const ratePerSec = profile.salary / ((profile.hoursPerWeek || 40) * 52 * 3600);
   const freeMoneyPerHour = ratePerSec * 3600;
 
+  // Editable cell predicate
+  const isEditable = (d: number, h: number) => {
+    const c = cells.find((x) => x.day === d && x.hour === h);
+    return !!c && c.origin !== "external";
+  };
+
+  // ---- Selection helpers ----
+  function toggleOne(d: number, h: number, shift: boolean) {
+    if (!isEditable(d, h)) return;
+    const k = key(d, h);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (shift && lastClicked) {
+        const [ld, lh] = lastClicked.split("-").map(Number);
+        if (ld === d) {
+          const [lo, hi] = [Math.min(lh, h), Math.max(lh, h)];
+          for (let hh = lo; hh <= hi; hh++) if (isEditable(d, hh)) next.add(key(d, hh));
+        } else {
+          if (next.has(k)) next.delete(k); else next.add(k);
+        }
+      } else {
+        if (next.has(k)) next.delete(k); else next.add(k);
+      }
+      return next;
+    });
+    setLastClicked(k);
+  }
+  const clearSelection = () => setSelected(new Set());
+  const selectAllEditable = () => {
+    const s = new Set<string>();
+    for (const c of cells) if (c.origin !== "external") s.add(key(c.day, c.hour));
+    setSelected(s);
+  };
+  const invertSelection = () => {
+    setSelected((prev) => {
+      const next = new Set<string>();
+      for (const c of cells) {
+        if (c.origin === "external") continue;
+        const k = key(c.day, c.hour);
+        if (!prev.has(k)) next.add(k);
+      }
+      return next;
+    });
+  };
+  const selectByType = (t: BlockType) => {
+    const s = new Set<string>();
+    for (const c of cells) if (c.origin !== "external" && c.type === t) s.add(key(c.day, c.hour));
+    setSelected(s);
+  };
+  const selectRow = (h: number, additive = false) => {
+    setSelected((prev) => {
+      const next = additive ? new Set(prev) : new Set<string>();
+      for (let d = 0; d < 5; d++) if (isEditable(d, h)) next.add(key(d, h));
+      return next;
+    });
+  };
+  const selectCol = (d: number, additive = false) => {
+    setSelected((prev) => {
+      const next = additive ? new Set(prev) : new Set<string>();
+      for (const h of HOURS) if (isEditable(d, h)) next.add(key(d, h));
+      return next;
+    });
+  };
+
+  // ---- Mutation helpers ----
   function setCell(d: number, h: number, type: BlockType, label?: string) {
     setCells((prev) => prev.map((c) =>
       c.day === d && c.hour === h && c.origin !== "external"
@@ -125,30 +194,88 @@ function CalendarPage() {
       c.origin !== "external" && predicate(c) ? { ...c, type, label: label ?? c.label, origin: "inko" } : c,
     ));
   }
+  function applyToSelection(type: BlockType, label?: string) {
+    if (selected.size === 0) {
+      toast("Nothing selected", { description: "Click cells to select first." });
+      return;
+    }
+    setBulk((c) => selected.has(key(c.day, c.hour)), type, label);
+    toast.success(`Set ${selected.size} block(s) → ${LABEL_FOR[type]}`);
+  }
+  function resetSelection() {
+    if (selected.size === 0) return;
+    const fresh = buildSuggestedWeek({ hoursPerWeek: profile.hoursPerWeek || 40 });
+    const freshMap = new Map(fresh.map((c) => [key(c.day, c.hour), c]));
+    setCells((prev) => prev.map((c) => {
+      if (c.origin === "external") return c;
+      if (!selected.has(key(c.day, c.hour))) return c;
+      const f = freshMap.get(key(c.day, c.hour));
+      return f ? { ...f } : c;
+    }));
+    toast("Selection reset to suggested");
+  }
 
-  function handleDown(d: number, h: number) {
-    const cell = cells.find((c) => c.day === d && c.hour === h);
-    if (!cell || cell.origin === "external") return;
-    const next = nextType(cell.type);
-    setDrag({ start: key(d, h), type: next });
-    setHover(new Set([key(d, h)]));
-    setCell(d, h, next, "");
+  // ---- Drag-to-select ----
+  function handleDown(d: number, h: number, e: React.MouseEvent) {
+    if (e.button !== 0) return;
+    if (!isEditable(d, h)) return;
+    const k = key(d, h);
+    const isShift = e.shiftKey;
+    if (isShift) {
+      toggleOne(d, h, true);
+      return;
+    }
+    // toggle and start drag in matching mode
+    const wasSelected = selected.has(k);
+    const mode: "add" | "remove" = wasSelected ? "remove" : "add";
+    setDrag({ mode });
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (mode === "add") next.add(k); else next.delete(k);
+      return next;
+    });
+    setLastClicked(k);
   }
   function handleEnter(d: number, h: number) {
     if (!drag) return;
-    const cell = cells.find((c) => c.day === d && c.hour === h);
-    if (!cell || cell.origin === "external") return;
+    if (!isEditable(d, h)) return;
     const k = key(d, h);
-    if (hover.has(k)) return;
-    setHover((prev) => new Set(prev).add(k));
-    setCell(d, h, drag.type, "");
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (drag.mode === "add") next.add(k); else next.delete(k);
+      return next;
+    });
   }
   useEffect(() => {
     if (!drag) return;
-    const up = () => { setDrag(null); setHover(new Set()); };
+    const up = () => setDrag(null);
     window.addEventListener("mouseup", up);
     return () => window.removeEventListener("mouseup", up);
   }, [drag]);
+
+  // Close popovers on outside click / escape
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-popover]")) {
+        setContextMenu(null); setRowMenuHour(null); setColMenuDay(null);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setContextMenu(null); setRowMenuHour(null); setColMenuDay(null); clearSelection();
+      }
+    }
+    window.addEventListener("mousedown", onDoc);
+    window.addEventListener("keydown", onKey);
+    return () => { window.removeEventListener("mousedown", onDoc); window.removeEventListener("keydown", onKey); };
+  }, []);
+
+  function handleContext(d: number, h: number, e: React.MouseEvent) {
+    e.preventDefault();
+    if (!isEditable(d, h)) return;
+    setContextMenu({ day: d, hour: h, x: e.clientX, y: e.clientY });
+  }
 
   const templates = [
     { name: "Maximum Grind Afternoon", apply: () => setBulk((c) => c.hour >= 14, "free", "Smug Grind") },
@@ -197,6 +324,7 @@ function CalendarPage() {
     setOooOpen(false);
     toast.success(`Rebooked '${title}' into ${slots.length} ${profile.preferredBand} slot(s)`);
   }
+
 
   return (
     <main className="pt-24 select-none">
