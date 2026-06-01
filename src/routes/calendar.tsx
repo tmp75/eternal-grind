@@ -519,6 +519,42 @@ function CalendarPage() {
         </p>
 
 
+      {contextMenu && (
+        <CellContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          label={cells.find((c) => c.day === contextMenu.day && c.hour === contextMenu.hour)?.label ?? ""}
+          inSelection={selected.has(key(contextMenu.day, contextMenu.hour))}
+          onSet={(t) => {
+            const targetKeys = selected.has(key(contextMenu.day, contextMenu.hour)) && selected.size > 1
+              ? selected : new Set([key(contextMenu.day, contextMenu.hour)]);
+            setBulk((c) => targetKeys.has(key(c.day, c.hour)), t);
+            setContextMenu(null);
+            toast.success(`${targetKeys.size} block(s) → ${LABEL_FOR[t]}`);
+          }}
+          onLabel={(label) => {
+            const targetKeys = selected.has(key(contextMenu.day, contextMenu.hour)) && selected.size > 1
+              ? selected : new Set([key(contextMenu.day, contextMenu.hour)]);
+            setCells((prev) => prev.map((c) =>
+              c.origin !== "external" && targetKeys.has(key(c.day, c.hour)) ? { ...c, label } : c,
+            ));
+            setContextMenu(null);
+          }}
+          onAddToSelection={() => {
+            setSelected((prev) => new Set(prev).add(key(contextMenu.day, contextMenu.hour)));
+            setContextMenu(null);
+          }}
+          onReset={() => {
+            const fresh = buildSuggestedWeek({ hoursPerWeek: profile.hoursPerWeek || 40 });
+            const f = fresh.find((c) => c.day === contextMenu.day && c.hour === contextMenu.hour);
+            if (f) setCell(contextMenu.day, contextMenu.hour, f.type, f.label);
+            setContextMenu(null);
+          }}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+
+
         <div className="mt-16">
           <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.5em] text-violet">Trigger Events · Daily</p>
           <div className="grid gap-4 md:grid-cols-3">
