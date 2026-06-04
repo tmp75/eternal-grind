@@ -5,10 +5,22 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export const INKCHAIN_URL = "https://inkonchain.com";
-export const PUMP_FUN_URL = INKCHAIN_URL;
-export const INKO_CA = "0x767F1e9feDfF2BFA4f90a7EFFddfCCc2970530Ba";
 export const INKO_COMMUNITY_URL = "https://inkypump.com/join/INKO";
+// All "Buy $INKO" / acquisition CTAs route through the community pump page.
+export const INKCHAIN_URL = INKO_COMMUNITY_URL;
+export const PUMP_FUN_URL = INKO_COMMUNITY_URL;
+export const INKO_BUY_URL = INKO_COMMUNITY_URL;
+export const INKO_CA = "0x767f1e9fedff2bfa4f90a7effddfccc2970530ba";
+export const INKO_BRIDGE_URL =
+  "https://jumper.xyz/?fromChain=57073&toChain=57073&toToken=0x0000000000000000000000000000000000000000";
+export const INKO_DEBANK_URL =
+  "https://debank.com/token/ink/0x767f1e9fedff2bfa4f90a7effddfccc2970530ba/overview";
+export const INKO_DEV_LOCK_TX_URL =
+  "https://explorer.inkonchain.com/tx/0x494e3359f643a116eaee8a8f6678e7c67a9daa2ca08ee154e82790184913425a";
+export const INKO_DEXSCREENER_URL =
+  "https://dexscreener.com/ink/0x2b6d23b85582c7bdfe1caec327af5161b220ffb2";
+export const INKO_GECKOTERMINAL_URL =
+  "https://www.geckoterminal.com/ink/pools/0x2b6d23b85582c7bdfe1caec327af5161b220ffb2?utm_source=coingecko&utm_medium=referral&utm_campaign=searchresults";
 export const SALARY_PER_HOUR = 28;
 export const WORK_END_HOUR = 17;
 
