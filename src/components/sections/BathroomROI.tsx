@@ -15,6 +15,16 @@ const ACTIVITIES: Activity[] = [
   { id: "nod",    label: "Strategic Nod", icon: Users, tagline: "'Good point.' Meeting moves on." },
 ];
 
+const SESSION_KEY = "inko.calc.session.v1";
+type Session = { activeId: ActivityId; seconds: number; running: boolean; startedAt: number | null };
+function readSession(): Session | null {
+  if (typeof window === "undefined") return null;
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
+}
+function writeSession(s: Session) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch {}
+}
+
 export function BathroomROI() {
   const [profile, hydrated] = useProfile();
   const [activeId, setActiveId] = useState<ActivityId>("toilet");
@@ -22,6 +32,27 @@ export function BathroomROI() {
   const [seconds, setSeconds] = useState(0);
   const tRef = useRef<number | null>(null);
   const lastFlushRef = useRef(0);
+
+  // Restore previous session (survives reloads). If it was running, add the
+  // elapsed wall-clock time since it was last saved.
+  useEffect(() => {
+    const s = readSession();
+    if (!s) return;
+    setActiveId(s.activeId);
+    let restored = s.seconds;
+    if (s.running && s.startedAt) {
+      restored += Math.floor((Date.now() - s.startedAt) / 1000);
+    }
+    setSeconds(restored);
+    lastFlushRef.current = restored;
+    setRunning(s.running);
+  }, []);
+
+  // Mirror state to localStorage so the session survives reloads.
+  useEffect(() => {
+    writeSession({ activeId, seconds, running, startedAt: running ? Date.now() - seconds * 1000 : null });
+  }, [activeId, seconds, running]);
+
 
   const salary = profile.salary;
   const hpw = Math.max(1, profile.hoursPerWeek || 40);
