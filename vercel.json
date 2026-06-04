@@ -5,6 +5,9 @@
   "framework": null,
   "installCommand": "bun install",
   "devCommand": "vite dev",
+  "env": {
+    "NITRO_PRESET": "vercel"
+  },
   "git": {
     "deploymentEnabled": {
       "main": true
