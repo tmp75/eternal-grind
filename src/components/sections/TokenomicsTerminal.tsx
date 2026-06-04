@@ -1,7 +1,16 @@
 import { motion } from "framer-motion";
 import { Copy, Lock, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { INKCHAIN_URL, INKO_CA, INKO_COMMUNITY_URL } from "@/lib/ooo";
+import {
+  INKO_BUY_URL,
+  INKO_CA,
+  INKO_COMMUNITY_URL,
+  INKO_BRIDGE_URL,
+  INKO_DEBANK_URL,
+  INKO_DEV_LOCK_TX_URL,
+  INKO_DEXSCREENER_URL,
+  INKO_GECKOTERMINAL_URL,
+} from "@/lib/ooo";
 import inkoCoin from "@/assets/inko-coin.png";
 
 const SHORT_CA = `${INKO_CA.slice(0, 6)}…${INKO_CA.slice(-4)}`;
